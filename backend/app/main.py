@@ -33,8 +33,10 @@ app = FastAPI(
     title="CiteLens API",
     description="Citation discovery and ranking for research papers.",
     version="1.0.0",
-    docs_url="/docs",
-    redoc_url="/redoc",
+    # Disable interactive docs in production — avoids leaking API schema publicly.
+    # Accessible at /docs and /redoc in development only.
+    docs_url=None if settings.is_production else "/docs",
+    redoc_url=None if settings.is_production else "/redoc",
 )
 
 # ---------------------------------------------------------------------------

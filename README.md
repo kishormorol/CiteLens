@@ -183,25 +183,85 @@ VITE_API_BASE_URL=http://localhost:8000
 
 ## 🌐 Deployment
 
-### Frontend → GitHub Pages
+### Deploy order
 
-Deployed automatically via GitHub Actions on every push to `main`.
-Live at: `https://kishormorol.github.io/CiteLens/`
+Deploy the **backend first**, then the **frontend**. The frontend build bakes
+in the backend URL at compile time, so the URL must exist before running CI.
 
-### Backend → Render
+---
 
-1. Create a **Web Service** → set **Root Directory** to `backend`
-2. **Build command**: `pip install -r requirements.txt`
-3. **Start command**: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
-4. Add environment variables in the Render dashboard
-5. Set `ALLOWED_ORIGINS=https://kishormorol.github.io`
+### Backend → Render (recommended)
+
+**Option A — Render Blueprint (one-click)**
+
+1. Fork or push this repo to GitHub
+2. Go to [render.com](https://render.com) → **New → Blueprint**
+3. Connect your GitHub repo — Render finds `render.yaml` automatically
+4. Click **Apply** — the service `citelens-api` is created
+5. Open the service → **Environment** tab → fill in:
+   - `OPENALEX_EMAIL` — your email for the OA polite pool
+   - `SEMANTIC_SCHOLAR_API_KEY` — optional, raises SS rate limit to 10 req/s
+6. Trigger a manual deploy (or push to `main`)
+7. Copy the service URL: `https://citelens-api.onrender.com` (example)
+
+**Option B — Manual**
+
+1. **New Web Service** → connect repo → **Root Directory**: `backend`
+2. **Runtime**: Python 3
+3. **Build command**: `pip install -r requirements.txt`
+4. **Start command**: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+5. **Environment variables**:
+
+   | Key | Value |
+   |---|---|
+   | `APP_ENV` | `production` |
+   | `ALLOWED_ORIGINS` | `https://kishormorol.github.io` |
+   | `FALLBACK_TO_MOCK_ON_ERROR` | `true` |
+   | `OPENALEX_EMAIL` | your@email.com |
+   | `SEMANTIC_SCHOLAR_API_KEY` | *(optional)* |
+
+6. Health check path: `/health`
+
+---
 
 ### Backend → Railway
 
-1. New project → **Deploy from GitHub repo**
-2. Set **Root Directory** to `backend`
-3. Railway auto-detects the `Procfile` — no extra config needed
-4. Add environment variables in the Railway dashboard
+1. Go to [railway.app](https://railway.app) → **New Project → Deploy from GitHub repo**
+2. Select this repo
+3. Click **Settings** → set **Root Directory** to `backend`
+4. Railway detects the `Procfile` automatically; `railway.toml` provides health check config
+5. **Variables** tab → add:
+
+   | Key | Value |
+   |---|---|
+   | `APP_ENV` | `production` |
+   | `ALLOWED_ORIGINS` | `https://kishormorol.github.io` |
+   | `FALLBACK_TO_MOCK_ON_ERROR` | `true` |
+   | `OPENALEX_EMAIL` | your@email.com |
+   | `SEMANTIC_SCHOLAR_API_KEY` | *(optional)* |
+
+6. Copy the public domain from the Railway dashboard (e.g. `https://citelens-api.up.railway.app`)
+
+---
+
+### Frontend → GitHub Pages
+
+The workflow (`.github/workflows/deploy.yml`) runs automatically on every push to `main`.
+
+**One-time setup:**
+
+1. In your GitHub repo → **Settings → Pages**
+   - Source: **Deploy from a branch** → branch: `gh-pages` / root
+2. In **Settings → Secrets and variables → Actions → New repository secret**:
+   - Name: `VITE_API_BASE_URL`
+   - Value: your production backend URL (e.g. `https://citelens-api.onrender.com`)
+3. Push any commit to `main` — the workflow builds and deploys automatically
+
+**Without a backend secret:**
+The frontend builds in demo-data mode (no secret required). The "Demo data" badge
+appears in the seed card to indicate bundled mock results are being shown.
+
+Live at: **`https://kishormorol.github.io/CiteLens/`**
 
 ---
 
@@ -253,7 +313,7 @@ CiteLens helps you **decide what to read next**.
 - [x] Explainable scores with per-paper breakdowns
 - [x] My Library with localStorage persistence
 - [x] Timeline view
-- [ ] Live API integration (currently mock mode on GitHub Pages)
+- [x] Frontend ↔ backend API integration (set `VITE_API_BASE_URL` secret to go live)
 - [ ] Better semantic relevance (embeddings)
 - [ ] Citation context snippets
 - [ ] Graph visualization

@@ -26,6 +26,11 @@ jobs:
 
       - name: Build
         run: npm run build
+        env:
+          # Set this secret in: Settings → Secrets and variables → Actions
+          # Value: your production backend URL, e.g. https://citelens-api.onrender.com
+          # Leave unset to build in demo-data mode (no backend required).
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
