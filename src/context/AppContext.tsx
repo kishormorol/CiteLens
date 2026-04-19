@@ -75,6 +75,8 @@ function reducer(state: AppState, action: AppAction): AppState {
         // Reset per-result UI state when results change
         selectedPaperId: null,
         expandedIds: new Set(),
+        filters: DEFAULT_FILTERS,
+        resultsTab: 'ranked',
       }
     default:
       return state

@@ -19,9 +19,11 @@ export function Hero() {
   const isLoading = mode === 'loading'
   const hasResults = mode === 'results'
 
+  const queryTooLong = query.length > 500
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!query.trim()) return
+    if (!query.trim() || queryTooLong) return
     analyze()
   }
 
@@ -101,10 +103,16 @@ export function Hero() {
               onKeyDown={handleKeyDown}
               placeholder="Paste arXiv ID (e.g. 1706.03762), DOI, paper title, or Semantic Scholar URL…"
               rows={hasResults ? 2 : 3}
+              maxLength={600}
               className="w-full resize-none p-4 text-sm bg-transparent outline-none"
               style={{ color: 'var(--ink)', caretColor: 'var(--accent)' }}
               disabled={isLoading}
             />
+            {queryTooLong && (
+              <p className="px-4 pb-2 text-xs" style={{ color: 'var(--error, #dc2626)' }}>
+                Input is too long — maximum 500 characters ({query.length}/500).
+              </p>
+            )}
 
             {/* Mode toggle + submit */}
             <div
@@ -130,7 +138,7 @@ export function Hero() {
 
               <button
                 type="submit"
-                disabled={!query.trim() || isLoading}
+                disabled={!query.trim() || isLoading || queryTooLong}
                 className="flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                 style={{
                   background: 'var(--accent)',

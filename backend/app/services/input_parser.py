@@ -53,6 +53,8 @@ def parse_input(raw: str) -> ParsedInput:
     query = raw.strip()
     if not query:
         raise InputParseError("Input must not be empty.")
+    if len(query) > 500:
+        raise InputParseError("Input too long — maximum 500 characters.")
 
     # --- arXiv URL ----------------------------------------------------------
     m = _ARXIV_URL_RE.search(query)

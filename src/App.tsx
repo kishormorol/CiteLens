@@ -3,6 +3,7 @@ import { Navbar } from './components/layout/Navbar'
 import { Hero } from './components/hero/Hero'
 import { ResultsShell } from './components/results/ResultsShell'
 import { TweaksPanel, getAccentVars } from './components/tweaks/TweaksPanel'
+import { ErrorBoundary } from './components/ui/ErrorBoundary'
 import { useApp } from './context/AppContext'
 
 export function App() {
@@ -24,6 +25,7 @@ export function App() {
     >
       <Navbar />
 
+      <ErrorBoundary>
       <main>
         <Hero />
 
@@ -175,6 +177,7 @@ export function App() {
           </section>
         )}
       </main>
+      </ErrorBoundary>
 
       {/* Footer */}
       <footer

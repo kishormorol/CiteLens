@@ -20,7 +20,7 @@ class _CamelModel(BaseModel):
 # ---------------------------------------------------------------------------
 
 class AnalyzePaperRequest(BaseModel):
-    query: str = Field(..., min_length=1, description="arXiv ID/URL, DOI, Semantic Scholar URL, or paper title")
+    query: str = Field(..., min_length=1, max_length=500, description="arXiv ID/URL, DOI, Semantic Scholar URL, or paper title")
     limit: int = Field(default=20, ge=1, le=100, description="Maximum results to return")
 
 
