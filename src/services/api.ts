@@ -159,20 +159,9 @@ export async function analyzePaper(query: string, limit = 20): Promise<AnalyzeRe
     }
   }
 
-  // 404 = paper not found — surface the error to the user
-  if (res.status === 404) {
-    throw new Error('Paper not found')
-  }
-
-  // Other non-ok responses — fall back to demo data
+  // Any non-ok response (404, 422, 502, etc.) = surface the error to the user
   if (!res.ok) {
-    return {
-      papers: PAPERS,
-      seedPaper: SEED_PAPER,
-      totalCiting: 1284,
-      sourcesUsed: SEED_PAPER.sources,
-      usingDemoData: true,
-    }
+    throw new Error(`HTTP ${res.status}`)
   }
 
   const data: ApiResponse = await res.json()
