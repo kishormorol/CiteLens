@@ -1,177 +1,238 @@
-# 🔍 CiteLens
+<div align="center">
 
-**Find the follow-up papers that matter most.**
+# CiteLens
 
-CiteLens helps researchers, students, and engineers quickly discover the most influential papers that cite a given research paper.
+**Discover the papers that actually matter — ranked by impact, not just count.**
 
-Paste a paper link → get a ranked list of the most important citing papers → understand *why* they matter.
+Paste any paper link. Get a scored, explainable list of the most important papers citing it.
 
----
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-kishormorol.github.io%2FCiteLens-4f46e5?style=for-the-badge&logo=github)](https://kishormorol.github.io/CiteLens/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-22c55e?style=for-the-badge)](LICENSE)
+[![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
+[![React](https://img.shields.io/badge/Frontend-React%2018-61dafb?style=for-the-badge&logo=react&logoColor=black)](https://react.dev)
 
-## ✨ What is CiteLens?
-
-CiteLens is a research discovery tool that answers:
-
-> **"Which papers citing this work should I read next?"**
-
-Instead of just showing all citations, CiteLens:
-
-- ranks citing papers by **impact, relevance, and influence**
-- explains **why each paper is important**
-- helps you **prioritize reading**, not just explore
+</div>
 
 ---
 
-## 🚀 Features
+## The problem
 
-- 🔗 Paste any paper link (arXiv, DOI, Semantic Scholar, or plain title)
-- 🧠 Smart ranking using multiple signals:
-  - field-normalized citation impact (FWCI, citation percentile)
-  - citation network influence (local PageRank)
-  - semantic relevance to the seed paper
-  - citation intent (highly influential flag)
-- 📊 Explainable scores — per-paper "Why ranked here" breakdown
-- 🖼️ Three layout modes — Focus (hero cards), Split (list + detail), Stream (dense table)
-- 🔀 Four sort modes — Most Influential, Most Relevant, Recent, Reviews
-- 🔎 Filters — year range, relevance threshold, influential-only, reviews-only
-- 📅 Timeline view — citation arc over time
-- 📚 My Library — save and revisit papers with localStorage persistence
-- 🌙 Dark mode — full token-driven palette
-- 📱 Mobile-responsive — works on all screen sizes
-- 🎨 Five accent color themes
-- 🧪 Mock mode — full UI without any API keys
+A landmark paper gets cited by hundreds of follow-ups. Reading them all is impossible. Sorting by citation count alone ignores relevance, recency, and how the work was actually used. You end up either reading too much or missing what matters.
+
+## What CiteLens does
+
+CiteLens gives every citing paper a **multi-signal score** and tells you *why* it ranked there.
+
+```
+Input:  1706.03762  (or any arXiv ID, DOI, title, or Semantic Scholar URL)
+
+Output: Ranked list of citing papers, each scored across four dimensions:
+        Impact · Network · Relevance · Context
+        with a plain-English explanation for each result.
+```
+
+👉 **[Try it live — no sign-up, no API key needed](https://kishormorol.github.io/CiteLens/)**
 
 ---
 
-## 🧠 How it works
+## How scores work
 
-CiteLens uses a multi-signal ranking system:
-
-### Ranking Signals
-
-| Signal | Weight | Source |
+| Signal | Weight | What it measures |
 |---|---|---|
-| **Impact Score** | 45% | OpenAlex citation percentile + FWCI |
-| **Network Score** | 25% | Local PageRank across candidate set |
-| **Relevance Score** | 20% | Token-overlap with seed title/abstract |
-| **Citation Intent Score** | 10% | Semantic Scholar "highly influential" flag |
-
-### Final Score
+| **Impact** | 45% | Field-normalized citation percentile + FWCI (via OpenAlex) |
+| **Network** | 25% | Local PageRank across the full candidate citation graph |
+| **Relevance** | 20% | Semantic similarity to the seed paper (title + abstract) |
+| **Context** | 10% | Semantic Scholar "highly influential" citation flag |
 
 ```
-FinalScore =
-  0.45 × ImpactScore +
-  0.25 × NetworkScore +
-  0.20 × RelevanceScore +
-  0.10 × CitationIntentScore
+FinalScore = 0.45 × Impact + 0.25 × Network + 0.20 × Relevance + 0.10 × Context
 ```
 
-Weights are renormalized when a signal is unavailable for a given paper.
-Each result includes a full breakdown and plain-language explanation.
+Weights are renormalized when a signal is missing. Every result shows the full breakdown.
 
 ---
 
-## 🖥️ Live Demo
+## Features
 
-👉 **[kishormorol.github.io/CiteLens](https://kishormorol.github.io/CiteLens/)**
-
----
-
-## 🏗️ Architecture
-
-```
-Frontend (React 18 + TypeScript + Vite + Tailwind CSS)
-        ↓  POST /api/analyze-paper
-Backend (FastAPI + Python 3.11)
-        ↓
-Data Sources
-  ├── Semantic Scholar  (primary: paper lookup + citation fetch)
-  ├── OpenAlex          (enrichment: FWCI, citation percentile)
-  └── arXiv             (fallback: metadata)
-```
+- **Any input format** — arXiv ID/URL, DOI, DOI URL, Semantic Scholar URL, or plain title
+- **Ranked results** — sorted by weighted multi-signal score, not raw citation count
+- **Per-paper explanations** — plain-English "Why ranked here" for every result
+- **Smart filters** — year range, minimum relevance score, influential-only, reviews-only
+- **Timeline view** — visualize how citation activity has grown year by year
+- **Four sort modes** — Most Influential, Most Relevant, Recent, Reviews
+- **Dark mode** — full token-driven palette, five accent colors, compact/cozy density
+- **Zero config** — works out of the box in demo mode with no API keys
+- **Open data** — powered by Semantic Scholar, OpenAlex, and arXiv (all free APIs)
 
 ---
 
-## 📦 Project Structure
+## Data sources
+
+| Source | Role |
+|---|---|
+| [Semantic Scholar](https://api.semanticscholar.org/) | Primary paper lookup + citation graph |
+| [OpenAlex](https://openalex.org/) | FWCI, citation percentile, citing paper enrichment |
+| [arXiv](https://arxiv.org/help/api) | Metadata fallback for arXiv papers |
+
+All three APIs are free and open. CiteLens requires no paid subscriptions.
+
+---
+
+## Stack
 
 ```
-CiteLens/
-  src/              → React + TypeScript frontend (Vite)
-  backend/          → FastAPI service
-    app/
-      routes/       → HTTP endpoints
-      services/     → input parsing, ranking, enrichment, mock data
-      models/       → Pydantic request/response + internal models
-      utils/        → normalization, graph, exceptions
-    tests/          → pytest integration + unit tests
-  public/           → static assets
-  .github/workflows → CI + GitHub Pages deployment
+Frontend          React 18 + TypeScript + Vite + Tailwind CSS
+Backend           FastAPI + Python 3.11 + Pydantic v2
+Deployment        GitHub Pages (frontend) + Railway (backend)
+CI/CD             GitHub Actions — build, test, deploy on push to main
 ```
 
 ---
 
-## ⚙️ Local Development
+## Quick start
 
-### 1. Clone
+### Run locally (5 minutes)
 
+**1. Clone**
 ```bash
-git clone https://github.com/inexplainableai/CiteLens.git
+git clone https://github.com/kishormorol/CiteLens.git
 cd CiteLens
 ```
 
-### 2. Frontend
-
+**2. Frontend**
 ```bash
 npm install
 npm run dev
+# → http://localhost:5173/CiteLens/
 ```
 
-Runs at `http://localhost:5173/CiteLens/`
+Opens immediately with bundled demo data — no backend needed.
 
-### 3. Backend
-
+**3. Backend** *(optional — for real results)*
 ```bash
 cd backend
 pip install -r requirements-dev.txt
-cp .env.example .env   # set OPENALEX_EMAIL and optionally SEMANTIC_SCHOLAR_API_KEY
+cp .env.example .env
+# set OPENALEX_EMAIL in .env (free, just your email)
 uvicorn app.main:app --reload --port 8000
+# → http://localhost:8000/docs
 ```
 
-API docs at `http://localhost:8000/docs`
+Then set `VITE_API_BASE_URL=http://localhost:8000` in a root `.env` and restart the frontend.
 
----
-
-## 🧪 Mock Mode
-
-Run the full UI without any API keys:
-
-```env
-# backend/.env
-USE_MOCK_DATA=true
-```
-
-Returns a sample seed paper (Attention Is All You Need) with 10 pre-scored citing papers.
-The test suite uses mock mode automatically — no `.env` setup needed.
-
+### Run tests
 ```bash
 cd backend
-pytest tests/ -v   # 42 tests, all pass without API keys
+pytest tests/ -v   # 42 tests, no API keys required
 ```
 
 ---
 
-## 🔌 Environment Variables
+## Deploy your own
+
+### Backend → Railway (recommended)
+
+1. Fork this repo
+2. [railway.app](https://railway.app) → **New Project → Deploy from GitHub repo**
+3. **Settings → Root Directory**: `backend`
+4. **Variables** tab → add:
+
+| Variable | Value |
+|---|---|
+| `APP_ENV` | `production` |
+| `ALLOWED_ORIGINS` | `https://<your-username>.github.io` |
+| `OPENALEX_EMAIL` | your@email.com |
+| `SEMANTIC_SCHOLAR_API_KEY` | *(optional — raises rate limit 1→10 req/s)* |
+
+5. Copy the public Railway URL
+
+### Backend → Render
+
+1. **New Web Service** → connect repo → **Root Directory**: `backend`
+2. **Build**: `pip install -r requirements.txt`
+3. **Start**: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+4. Add the same environment variables as above
+5. Health check path: `/health`
+
+### Frontend → GitHub Pages
+
+1. **Settings → Pages → Source**: Deploy from `gh-pages` branch
+2. **Settings → Secrets → Actions → New secret**:
+   - Name: `VITE_API_BASE_URL`
+   - Value: your Railway/Render URL
+3. Push to `main` — GitHub Actions builds and deploys automatically
+
+---
+
+## API reference
+
+### `POST /api/analyze-paper`
+
+```bash
+curl -X POST https://citelens-api-production.up.railway.app/api/analyze-paper \
+  -H "Content-Type: application/json" \
+  -d '{"query": "1706.03762", "limit": 20}'
+```
+
+`query` accepts: arXiv ID · arXiv URL · DOI · DOI URL · Semantic Scholar URL · paper title
+
+<details>
+<summary>Example response</summary>
+
+```json
+{
+  "seedPaper": {
+    "id": "204e3073870fae3d05bcbc2f6a8e263d9b72e776",
+    "title": "Attention Is All You Need",
+    "authors": ["Ashish Vaswani", "Noam Shazeer", "..."],
+    "citationCount": 142318,
+    "year": 2017
+  },
+  "summary": {
+    "totalCitingPapers": 1284,
+    "rankedCandidates": 20,
+    "sourcesUsed": ["semantic_scholar", "openalex"],
+    "mockMode": false
+  },
+  "results": [
+    {
+      "title": "BERT: Pre-training of Deep Bidirectional Transformers...",
+      "finalScore": 0.96,
+      "impactScore": 0.97,
+      "networkScore": 0.95,
+      "relevanceScore": 0.91,
+      "citationIntentScore": 1.0,
+      "highlyInfluential": true,
+      "badges": ["Highly Influential", "High Impact"],
+      "whyRanked": "Top-cited citing paper. FWCI 145.2×. Flagged as highly influential.",
+      "breakdown": {
+        "impact": "Top 0% cited in field. FWCI 145.2×.",
+        "network": "Central node in local citation graph.",
+        "relevance": "Strong topical overlap with seed.",
+        "context": "Flagged as highly influential by Semantic Scholar."
+      }
+    }
+  ]
+}
+```
+</details>
+
+Other endpoints: `POST /api/resolve-paper` · `POST /api/citations` · `GET /health`
+
+---
+
+## Environment variables
 
 ### Backend (`backend/.env`)
 
 | Variable | Default | Description |
 |---|---|---|
 | `APP_ENV` | `development` | `development` or `production` |
-| `USE_MOCK_DATA` | `false` | Return mock data without any API calls |
-| `FALLBACK_TO_MOCK_ON_ERROR` | `true` | Fall back to mock when upstream APIs fail |
-| `SEMANTIC_SCHOLAR_API_KEY` | — | Optional — raises rate limit from 1 to 10 req/s |
-| `OPENALEX_EMAIL` | — | Recommended — enables polite pool (faster responses) |
-| `ALLOWED_ORIGINS` | `http://localhost:5173,...` | Comma-separated CORS origins |
+| `USE_MOCK_DATA` | `false` | Skip all API calls, return bundled demo data |
+| `FALLBACK_TO_MOCK_ON_ERROR` | `true` | Graceful fallback when upstream APIs fail |
+| `SEMANTIC_SCHOLAR_API_KEY` | — | Optional. Raises SS rate limit from 1 to 10 req/s |
+| `OPENALEX_EMAIL` | — | Recommended. Enables OA polite pool (faster + stable) |
+| `ALLOWED_ORIGINS` | `http://localhost:5173,...` | Comma-separated CORS allow-list |
 
 ### Frontend (`.env`)
 
@@ -181,163 +242,65 @@ VITE_API_BASE_URL=http://localhost:8000
 
 ---
 
-## 🌐 Deployment
+## Project structure
 
-### Deploy order
-
-Deploy the **backend first**, then the **frontend**. The frontend build bakes
-in the backend URL at compile time, so the URL must exist before running CI.
-
----
-
-### Backend → Render (recommended)
-
-**Option A — Render Blueprint (one-click)**
-
-1. Fork or push this repo to GitHub
-2. Go to [render.com](https://render.com) → **New → Blueprint**
-3. Connect your GitHub repo — Render finds `render.yaml` automatically
-4. Click **Apply** — the service `citelens-api` is created
-5. Open the service → **Environment** tab → fill in:
-   - `OPENALEX_EMAIL` — your email for the OA polite pool
-   - `SEMANTIC_SCHOLAR_API_KEY` — optional, raises SS rate limit to 10 req/s
-6. Trigger a manual deploy (or push to `main`)
-7. Copy the service URL: `https://citelens-api.onrender.com` (example)
-
-**Option B — Manual**
-
-1. **New Web Service** → connect repo → **Root Directory**: `backend`
-2. **Runtime**: Python 3
-3. **Build command**: `pip install -r requirements.txt`
-4. **Start command**: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
-5. **Environment variables**:
-
-   | Key | Value |
-   |---|---|
-   | `APP_ENV` | `production` |
-   | `ALLOWED_ORIGINS` | `https://kishormorol.github.io` |
-   | `FALLBACK_TO_MOCK_ON_ERROR` | `true` |
-   | `OPENALEX_EMAIL` | your@email.com |
-   | `SEMANTIC_SCHOLAR_API_KEY` | *(optional)* |
-
-6. Health check path: `/health`
-
----
-
-### Backend → Railway
-
-1. Go to [railway.app](https://railway.app) → **New Project → Deploy from GitHub repo**
-2. Select this repo
-3. Click **Settings** → set **Root Directory** to `backend`
-4. Railway detects the `Procfile` automatically; `railway.toml` provides health check config
-5. **Variables** tab → add:
-
-   | Key | Value |
-   |---|---|
-   | `APP_ENV` | `production` |
-   | `ALLOWED_ORIGINS` | `https://kishormorol.github.io` |
-   | `FALLBACK_TO_MOCK_ON_ERROR` | `true` |
-   | `OPENALEX_EMAIL` | your@email.com |
-   | `SEMANTIC_SCHOLAR_API_KEY` | *(optional)* |
-
-6. Copy the public domain from the Railway dashboard (e.g. `https://citelens-api.up.railway.app`)
-
----
-
-### Frontend → GitHub Pages
-
-The workflow (`.github/workflows/deploy.yml`) runs automatically on every push to `main`.
-
-**One-time setup:**
-
-1. In your GitHub repo → **Settings → Pages**
-   - Source: **Deploy from a branch** → branch: `gh-pages` / root
-2. In **Settings → Secrets and variables → Actions → New repository secret**:
-   - Name: `VITE_API_BASE_URL`
-   - Value: your production backend URL (e.g. `https://citelens-api.onrender.com`)
-3. Push any commit to `main` — the workflow builds and deploys automatically
-
-**Without a backend secret:**
-The frontend builds in demo-data mode (no secret required). The "Demo data" badge
-appears in the seed card to indicate bundled mock results are being shown.
-
-Live at: **`https://kishormorol.github.io/CiteLens/`**
-
----
-
-## 🧩 API Overview
-
-### `POST /api/analyze-paper`
-
-```json
-{ "query": "1706.03762", "limit": 20 }
+```
+CiteLens/
+├── src/                        # React + TypeScript frontend
+│   ├── components/             # UI — Hero, Filters, Results, Navbar, Modals
+│   ├── context/AppContext.tsx  # Global state (useReducer + AbortController)
+│   ├── hooks/usePapers.ts      # Memoized filter + sort
+│   ├── services/api.ts         # Backend client with demo fallback
+│   └── data/mockData.ts        # Bundled demo data
+├── backend/
+│   └── app/
+│       ├── routes/             # FastAPI endpoints
+│       ├── services/           # Input parsing, paper resolver, ranking, enrichment
+│       ├── models/             # Pydantic request/response models
+│       └── utils/              # Text similarity, graph scoring, exceptions
+├── .github/workflows/          # CI + GitHub Pages deploy
+└── railway.toml                # Railway health check config
 ```
 
-`query` accepts: arXiv ID, arXiv URL, DOI, DOI URL, Semantic Scholar URL, or paper title.
-
-```json
-{
-  "seedPaper": { "id": "...", "title": "...", "authors": [], "citationCount": 142318 },
-  "summary":   { "totalCitingPapers": 1284, "rankedCandidates": 20, "mockMode": false },
-  "results": [
-    {
-      "title": "BERT: ...",
-      "finalScore": 0.96,
-      "impactScore": 0.97,
-      "networkScore": 0.95,
-      "relevanceScore": 0.91,
-      "citationIntentScore": 1.0,
-      "badges": ["Highly Influential", "High Impact"],
-      "whyRanked": "Ranked here due to: high normalized citation impact, ...",
-      "breakdown": { "impact": "Top 0% cited in field. FWCI 145.2×.", ... }
-    }
-  ]
-}
-```
-
-Other endpoints: `POST /api/resolve-paper`, `POST /api/citations`, `POST /api/ranked-citations`, `GET /health`
-
 ---
 
-## 🎯 Why CiteLens?
+## Roadmap
 
-Existing tools help you explore research.
-
-CiteLens helps you **decide what to read next**.
-
----
-
-## 🛣️ Roadmap
-
-- [x] Four-signal ranking (Impact, Network, Relevance, Intent)
-- [x] Explainable scores with per-paper breakdowns
-- [x] My Library with localStorage persistence
-- [x] Timeline view
-- [x] Frontend ↔ backend API integration (set `VITE_API_BASE_URL` secret to go live)
-- [ ] Better semantic relevance (embeddings)
-- [ ] Citation context snippets
-- [ ] Graph visualization
+- [x] Four-signal ranking (Impact, Network, Relevance, Context)
+- [x] Per-paper explainability — plain-English score breakdown
+- [x] Timeline view — citation arc over time
+- [x] Dark mode, five accent themes, density modes
+- [x] Full frontend ↔ backend integration
+- [x] React error boundary + input validation
+- [ ] Semantic embeddings (SPECTER2) for higher-quality relevance
+- [ ] Citation context snippets — *how* a paper was cited, not just that it was
+- [ ] Citation graph visualization
 - [ ] Export to BibTeX / CSV
-- [ ] Alerts for new influential papers
+- [ ] Email alerts for new influential citations
+- [ ] Per-IP rate limiting + result caching
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
-Contributions are welcome — open an issue, suggest improvements, or submit a PR.
+Issues, ideas, and PRs are welcome. If you find CiteLens useful, **give it a star** — it helps others find it.
 
----
-
-## 📄 License
-
-MIT License
+1. Fork → create a branch → make your change
+2. `pytest tests/ -v` must pass
+3. Open a PR with a clear description
 
 ---
 
-## 💡 Inspiration
+## License
 
-Inspired by [scite.ai](https://scite.ai), [Connected Papers](https://www.connectedpapers.com), and [ResearchRabbit](https://www.researchrabbit.ai).
+MIT — free to use, fork, and deploy.
 
 ---
 
-> Turn the overwhelming world of research papers into clear, ranked, and explainable reading paths.
+<div align="center">
+
+Inspired by [scite.ai](https://scite.ai) · [Connected Papers](https://www.connectedpapers.com) · [ResearchRabbit](https://www.researchrabbit.ai)
+
+**If CiteLens saved you time, consider starring the repo. It takes one second and helps researchers find this tool.**
+
+</div>
