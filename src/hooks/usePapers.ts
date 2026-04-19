@@ -9,9 +9,9 @@ export function usePapers(): Paper[] {
   return useMemo(() => {
     let list = [...papers]
 
-    // Filter by year
+    // Filter by year — papers with unknown year (0) are always included
     list = list.filter(
-      (p) => p.year >= filters.yearFrom && p.year <= filters.yearTo
+      (p) => !p.year || (p.year >= filters.yearFrom && p.year <= filters.yearTo)
     )
 
     // Filter by relevance threshold
