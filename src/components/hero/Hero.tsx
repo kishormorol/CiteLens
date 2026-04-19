@@ -1,4 +1,4 @@
-import React, { useRef } from 'react'
+import React, { useRef, useEffect } from 'react'
 import { SparkleIcon } from '../ui/Icons'
 import { useApp } from '../../context/AppContext'
 import type { AnalyzeMode } from '../../types'
@@ -20,6 +20,25 @@ export function Hero() {
   const hasResults = mode === 'results'
 
   const queryTooLong = query.length > 500
+
+  useEffect(() => {
+    function focusInput() {
+      textareaRef.current?.focus()
+      textareaRef.current?.select()
+    }
+    function onKeyDown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault()
+        focusInput()
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    window.addEventListener('citelens:focus-search', focusInput)
+    return () => {
+      window.removeEventListener('keydown', onKeyDown)
+      window.removeEventListener('citelens:focus-search', focusInput)
+    }
+  }, [])
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()

@@ -68,6 +68,7 @@ export function Navbar() {
         <div className="flex items-center gap-2">
           {/* Search affordance */}
           <button
+            onClick={() => window.dispatchEvent(new Event('citelens:focus-search'))}
             className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[var(--line)] text-sm transition-colors hover:bg-[var(--bg-2)]"
             style={{ color: 'var(--ink-4)' }}
           >
