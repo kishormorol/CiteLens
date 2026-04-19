@@ -108,24 +108,6 @@ export function Filters() {
           </span>
         </div>
 
-        {/* Gradient bar */}
-        <div
-          className="relative h-2 rounded-full"
-          aria-hidden="true"
-          style={{
-            background: 'linear-gradient(to right, var(--bg-3), var(--relevance))',
-          }}
-        >
-          <div
-            className="absolute top-1/2 w-3.5 h-3.5 rounded-full border-2 border-white shadow-sm"
-            style={{
-              left: `${filters.relevanceThreshold}%`,
-              background: 'var(--relevance)',
-              transform: 'translate(-50%, -50%)',
-            }}
-          />
-        </div>
-
         <input
           type="range"
           min={0}
@@ -136,7 +118,6 @@ export function Filters() {
             dispatch({ type: 'SET_FILTER', payload: { relevanceThreshold: Number(e.target.value) } })
           }
           className="w-full"
-          style={{ marginTop: '-0.5rem' }}
           aria-label={`Minimum relevance score: ${filters.relevanceThreshold === 0 ? 'any' : filters.relevanceThreshold}`}
         />
       </div>
