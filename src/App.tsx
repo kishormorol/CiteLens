@@ -32,24 +32,50 @@ export function App() {
         )}
 
         {mode === 'error' && (
-          <div className="max-w-3xl mx-auto px-4 sm:px-6 py-16 text-center">
-            <div
-              className="text-4xl mb-4"
-              style={{ fontFamily: 'Instrument Serif, Georgia, serif', color: 'var(--ink)' }}
-            >
-              Something went wrong
+          <div className="max-w-2xl mx-auto px-4 sm:px-6 py-16">
+            <div className="rounded-2xl border border-[var(--line)] p-8" style={{ background: 'var(--bg-1)' }}>
+              <div
+                className="text-2xl mb-2"
+                style={{ fontFamily: 'Instrument Serif, Georgia, serif', color: 'var(--ink)' }}
+              >
+                Paper not found
+              </div>
+              <p className="text-sm mb-6" style={{ color: 'var(--ink-3)', lineHeight: '1.6' }}>
+                We couldn't find this paper in Semantic Scholar, or it doesn't have enough
+                citation data yet. This is common for very new or niche papers.
+              </p>
+
+              <div
+                className="rounded-xl border border-[var(--line)] p-4 mb-6 flex flex-col gap-3"
+                style={{ background: 'var(--bg-2)' }}
+              >
+                <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--ink-4)' }}>
+                  Try one of these instead
+                </p>
+                {[
+                  ['arXiv ID', '1706.03762', 'Most reliable — works for any arXiv paper'],
+                  ['arXiv URL', 'https://arxiv.org/abs/1706.03762', 'Paste the full abstract page URL'],
+                  ['DOI', '10.1145/3292500.3330701', 'Found on the journal page or Google Scholar'],
+                  ['Semantic Scholar URL', 'https://semanticscholar.org/paper/...', 'Direct link from semanticscholar.org'],
+                ].map(([type, example, tip]) => (
+                  <div key={type} className="flex flex-col gap-0.5">
+                    <span className="text-xs font-medium" style={{ color: 'var(--ink-2)' }}>{type}</span>
+                    <code className="text-xs px-2 py-1 rounded" style={{ background: 'var(--bg-3)', color: 'var(--accent-ink)' }}>
+                      {example}
+                    </code>
+                    <span className="text-[11px]" style={{ color: 'var(--ink-4)' }}>{tip}</span>
+                  </div>
+                ))}
+              </div>
+
+              <button
+                onClick={() => dispatch({ type: 'SET_MODE', payload: 'idle' })}
+                className="px-5 py-2.5 rounded-xl text-sm font-semibold transition-opacity hover:opacity-90"
+                style={{ background: 'var(--accent)', color: 'white' }}
+              >
+                Try again
+              </button>
             </div>
-            <p className="text-base mb-6" style={{ color: 'var(--ink-3)' }}>
-              We couldn't retrieve citing papers for this input. Please check the
-              arXiv ID, DOI, or title and try again.
-            </p>
-            <button
-              onClick={() => dispatch({ type: 'SET_MODE', payload: 'idle' })}
-              className="px-5 py-2.5 rounded-xl text-sm font-semibold"
-              style={{ background: 'var(--accent)', color: 'white' }}
-            >
-              Try again
-            </button>
           </div>
         )}
 
