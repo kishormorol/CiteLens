@@ -176,6 +176,13 @@ export async function analyzePaper(query: string, limit = 20): Promise<AnalyzeRe
   }
 
   const data: ApiResponse = await res.json()
+
+  // Backend fell back to mock data — surface as an error so the user knows
+  // the paper wasn't found, rather than silently showing unrelated demo results.
+  if (data.summary.mockMode) {
+    throw new Error('Paper not found')
+  }
+
   return {
     papers: data.results.map(mapPaper),
     seedPaper: mapSeedPaper(
@@ -185,6 +192,6 @@ export async function analyzePaper(query: string, limit = 20): Promise<AnalyzeRe
     ),
     totalCiting: data.summary.totalCitingPapers,
     sourcesUsed: data.summary.sourcesUsed,
-    usingDemoData: data.summary.mockMode,
+    usingDemoData: false,
   }
 }
