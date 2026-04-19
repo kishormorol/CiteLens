@@ -94,6 +94,23 @@ class SummaryInfo(_CamelModel):
 
 
 # ---------------------------------------------------------------------------
+# Flat paper metadata (used by /citations — no scoring required)
+# ---------------------------------------------------------------------------
+
+class PaperMetadata(_CamelModel):
+    id: str
+    title: str
+    authors: list[str]
+    abstract: Optional[str] = None
+    year: Optional[int] = None
+    venue: Optional[str] = None
+    doi: Optional[str] = None
+    url: Optional[str] = None
+    citation_count: int = 0
+    sources: list[str] = []
+
+
+# ---------------------------------------------------------------------------
 # Top-level responses
 # ---------------------------------------------------------------------------
 
@@ -120,23 +137,6 @@ class HealthResponse(_CamelModel):
     version: str = "1.0.0"
     mock_mode: bool
     environment: str
-
-
-# ---------------------------------------------------------------------------
-# Flat paper metadata (used by /citations — no scoring required)
-# ---------------------------------------------------------------------------
-
-class PaperMetadata(_CamelModel):
-    id: str
-    title: str
-    authors: list[str]
-    abstract: Optional[str] = None
-    year: Optional[int] = None
-    venue: Optional[str] = None
-    doi: Optional[str] = None
-    url: Optional[str] = None
-    citation_count: int = 0
-    sources: list[str] = []
 
 
 # ---------------------------------------------------------------------------
