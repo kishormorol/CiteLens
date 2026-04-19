@@ -6,6 +6,7 @@ import { PaperSplitList } from '../papers/PaperSplit'
 import { SplitPreview } from '../papers/SplitPreview'
 import { PaperStream } from '../papers/PaperStream'
 import { Timeline } from '../timeline/Timeline'
+import { NetworkGraph } from '../network/NetworkGraph'
 import { SkeletonResults, SkeletonSeedCard } from '../ui/Skeleton'
 import { useApp } from '../../context/AppContext'
 import { usePapers } from '../../hooks/usePapers'
@@ -38,24 +39,6 @@ function EmptyState() {
   )
 }
 
-function NetworkComingSoon() {
-  return (
-    <div
-      className="flex flex-col items-center justify-center py-20 px-4 rounded-2xl border border-dashed border-[var(--accent-line)]"
-      style={{ background: 'var(--accent-weak)' }}
-    >
-      <div
-        className="text-4xl mb-3"
-        style={{ fontFamily: 'Instrument Serif, Georgia, serif', color: 'var(--accent)' }}
-      >
-        Coming soon
-      </div>
-      <p className="text-sm" style={{ color: 'var(--accent-ink)', opacity: 0.7 }}>
-        Interactive citation network graph — in development
-      </p>
-    </div>
-  )
-}
 
 function RankedContent() {
   const { state } = useApp()
@@ -158,14 +141,6 @@ export function ResultsShell() {
             }
           >
             {tab.label(papers.length)}
-            {tab.value === 'network' && (
-              <span
-                className="ml-1.5 px-1.5 py-0.5 text-[10px] rounded-full"
-                style={{ background: 'var(--bg-3)', color: 'var(--ink-4)' }}
-              >
-                soon
-              </span>
-            )}
           </button>
         ))}
       </div>
@@ -173,7 +148,7 @@ export function ResultsShell() {
       {/* Tab content */}
       {resultsTab === 'ranked'   && <RankedContent />}
       {resultsTab === 'timeline' && <Timeline />}
-      {resultsTab === 'network'  && <NetworkComingSoon />}
+      {resultsTab === 'network'  && <NetworkGraph />}
     </div>
   )
 }
