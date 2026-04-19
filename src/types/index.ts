@@ -44,6 +44,7 @@ export interface Paper {
   breakdown: PaperBreakdown
   abstract?: string
   doi?: string
+  url?: string
 }
 
 export interface SeedPaper {
@@ -55,6 +56,7 @@ export interface SeedPaper {
   citingCount: string
   sources: string[]
   abstract: string
+  url?: string
 }
 
 export interface FiltersState {
@@ -83,6 +85,10 @@ export interface AppState {
   selectedPaperId: number | null
   expandedIds: Set<number>
   tweaksPanelOpen: boolean
+  // Live data (populated after a successful analyze call)
+  papers: Paper[]
+  seedPaper: SeedPaper | null
+  usingDemoData: boolean
 }
 
 export type AppAction =
@@ -97,3 +103,7 @@ export type AppAction =
   | { type: 'TOGGLE_EXPANDED'; payload: number }
   | { type: 'TOGGLE_TWEAKS_PANEL' }
   | { type: 'CLOSE_TWEAKS_PANEL' }
+  | {
+      type: 'SET_RESULTS'
+      payload: { papers: Paper[]; seedPaper: SeedPaper; usingDemoData: boolean }
+    }

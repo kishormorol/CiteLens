@@ -4,10 +4,11 @@ import type {
   AppAction,
   FiltersState,
 } from '../types'
+import { analyzePaper } from '../services/api'
 
 const DEFAULT_FILTERS: FiltersState = {
   yearFrom: 2018,
-  yearTo: 2024,
+  yearTo: 2025,
   relevanceThreshold: 0,
   highlyInfluential: false,
   reviewOnly: false,
@@ -29,6 +30,9 @@ const initialState: AppState = {
   selectedPaperId: null,
   expandedIds: new Set(),
   tweaksPanelOpen: false,
+  papers: [],
+  seedPaper: null,
+  usingDemoData: false,
 }
 
 function reducer(state: AppState, action: AppAction): AppState {
@@ -62,6 +66,16 @@ function reducer(state: AppState, action: AppAction): AppState {
       return { ...state, tweaksPanelOpen: !state.tweaksPanelOpen }
     case 'CLOSE_TWEAKS_PANEL':
       return { ...state, tweaksPanelOpen: false }
+    case 'SET_RESULTS':
+      return {
+        ...state,
+        papers: action.payload.papers,
+        seedPaper: action.payload.seedPaper,
+        usingDemoData: action.payload.usingDemoData,
+        // Reset per-result UI state when results change
+        selectedPaperId: null,
+        expandedIds: new Set(),
+      }
     default:
       return state
   }
@@ -79,11 +93,25 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(reducer, initialState)
 
   const analyze = useCallback(() => {
+    if (!state.query.trim()) return
     dispatch({ type: 'SET_MODE', payload: 'loading' })
-    setTimeout(() => {
-      dispatch({ type: 'SET_MODE', payload: 'results' })
-    }, 1100)
-  }, [])
+
+    analyzePaper(state.query)
+      .then((result) => {
+        dispatch({
+          type: 'SET_RESULTS',
+          payload: {
+            papers: result.papers,
+            seedPaper: result.seedPaper,
+            usingDemoData: result.usingDemoData,
+          },
+        })
+        dispatch({ type: 'SET_MODE', payload: 'results' })
+      })
+      .catch(() => {
+        dispatch({ type: 'SET_MODE', payload: 'error' })
+      })
+  }, [state.query])
 
   return (
     <AppContext.Provider value={{ state, dispatch, analyze }}>

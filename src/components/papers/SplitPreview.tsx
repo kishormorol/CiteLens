@@ -127,9 +127,11 @@ export function SplitPreview({ paper }: SplitPreviewProps) {
 
         {/* Open button */}
         <a
-          href="#"
+          href={paper.url ?? '#'}
+          target={paper.url ? '_blank' : undefined}
+          rel={paper.url ? 'noopener noreferrer' : undefined}
           className="flex items-center justify-center gap-2 py-2.5 rounded-xl border border-[var(--accent-line)] text-sm font-medium transition-colors hover:bg-[var(--accent-weak)]"
-          style={{ color: 'var(--accent-ink)' }}
+          style={{ color: 'var(--accent-ink)', opacity: paper.url ? 1 : 0.5 }}
         >
           Open paper
           <ExternalLinkIcon size={13} />

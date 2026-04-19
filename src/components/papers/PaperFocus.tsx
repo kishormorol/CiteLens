@@ -207,9 +207,12 @@ export function PaperFocus({ paper, rank }: PaperFocusProps) {
             </button>
 
             <a
-              href="#"
+              href={paper.url ?? '#'}
+              target={paper.url ? '_blank' : undefined}
+              rel={paper.url ? 'noopener noreferrer' : undefined}
+              aria-label={`Open ${paper.title}${paper.url ? '' : ' (no link available)'}`}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--line)] text-xs font-medium transition-colors hover:bg-[var(--bg-2)]"
-              style={{ color: 'var(--ink-2)' }}
+              style={{ color: 'var(--ink-2)', opacity: paper.url ? 1 : 0.5 }}
             >
               Open paper
               <ExternalLinkIcon size={11} />

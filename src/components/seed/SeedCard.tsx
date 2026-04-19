@@ -1,14 +1,15 @@
 import React from 'react'
-import { SEED_PAPER } from '../../data/mockData'
 import { Badge } from '../ui/Badge'
 import { useApp } from '../../context/AppContext'
 import { usePapers } from '../../hooks/usePapers'
 
 export function SeedCard() {
-  const paper = SEED_PAPER
   const { state } = useApp()
   const papers = usePapers()
+  const paper = state.seedPaper
   const hasResults = state.mode === 'results'
+
+  if (!paper) return null
 
   const subtitle = hasResults
     ? `Found ${papers.length} citing papers`
@@ -19,7 +20,7 @@ export function SeedCard() {
       className="rounded-2xl border border-[var(--line)] overflow-hidden"
       style={{ background: 'var(--bg-1)', boxShadow: 'var(--shadow-sm)' }}
     >
-      <div className="px-5 py-3 border-b border-[var(--line)] flex items-center gap-2">
+      <div className="px-5 py-3 border-b border-[var(--line)] flex items-center gap-2 flex-wrap">
         <span
           className="text-xs font-medium px-2 py-0.5 rounded-full"
           style={{ background: 'var(--accent-weak)', color: 'var(--accent-ink)' }}
@@ -29,6 +30,19 @@ export function SeedCard() {
         <span className="text-xs" style={{ color: 'var(--ink-4)' }}>
           {subtitle}
         </span>
+        {state.usingDemoData && (
+          <span
+            className="ml-auto text-xs px-2 py-0.5 rounded-full border"
+            style={{
+              borderColor: 'var(--line-2)',
+              color: 'var(--ink-4)',
+              background: 'var(--bg-2)',
+            }}
+            title="Backend unavailable — showing bundled demo data"
+          >
+            Demo data
+          </span>
+        )}
       </div>
 
       <div className="p-5 flex flex-col sm:flex-row gap-5">

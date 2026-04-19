@@ -6,7 +6,7 @@ import { TweaksPanel, getAccentVars } from './components/tweaks/TweaksPanel'
 import { useApp } from './context/AppContext'
 
 export function App() {
-  const { state } = useApp()
+  const { state, dispatch } = useApp()
   const { tweaks, mode } = state
 
   const accentVars = getAccentVars(tweaks.accent, tweaks.theme)
@@ -44,6 +44,7 @@ export function App() {
               arXiv ID, DOI, or title and try again.
             </p>
             <button
+              onClick={() => dispatch({ type: 'SET_MODE', payload: 'idle' })}
               className="px-5 py-2.5 rounded-xl text-sm font-semibold"
               style={{ background: 'var(--accent)', color: 'white' }}
             >

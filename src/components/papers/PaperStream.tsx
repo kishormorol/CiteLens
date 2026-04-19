@@ -95,11 +95,15 @@ function PaperStreamRow({ paper, rank }: PaperStreamRowProps) {
       {/* Open */}
       <td className="py-2.5 pr-3 pl-2 w-8">
         <a
-          href="#"
+          href={paper.url ?? '#'}
+          target={paper.url ? '_blank' : undefined}
+          rel={paper.url ? 'noopener noreferrer' : undefined}
           onClick={(e) => e.stopPropagation()}
           aria-label={`Open ${paper.title}`}
-          className="opacity-40 hover:opacity-100 transition-opacity"
-          style={{ color: 'var(--ink-3)' }}
+          className="transition-opacity"
+          style={{ color: 'var(--ink-3)', opacity: paper.url ? 0.4 : 0.15 }}
+          onMouseEnter={(e) => { if (paper.url) (e.currentTarget as HTMLAnchorElement).style.opacity = '1' }}
+          onMouseLeave={(e) => { if (paper.url) (e.currentTarget as HTMLAnchorElement).style.opacity = '0.4' }}
         >
           <ExternalLinkIcon size={12} />
         </a>
