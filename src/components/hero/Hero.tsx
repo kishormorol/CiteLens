@@ -32,9 +32,8 @@ export function Hero() {
     }
   }
 
-  function handleChipClick(label: string) {
-    dispatch({ type: 'SET_QUERY', payload: label })
-    textareaRef.current?.focus()
+  function handleChipClick(query: string) {
+    analyze(query)
   }
 
   return (

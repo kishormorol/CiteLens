@@ -84,7 +84,7 @@ function reducer(state: AppState, action: AppAction): AppState {
 interface AppContextValue {
   state: AppState
   dispatch: React.Dispatch<AppAction>
-  analyze: () => void
+  analyze: (queryOverride?: string) => void
 }
 
 const AppContext = createContext<AppContextValue | null>(null)
@@ -92,11 +92,13 @@ const AppContext = createContext<AppContextValue | null>(null)
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(reducer, initialState)
 
-  const analyze = useCallback(() => {
-    if (!state.query.trim()) return
+  const analyze = useCallback((queryOverride?: string) => {
+    const q = queryOverride ?? state.query
+    if (!q.trim()) return
+    dispatch({ type: 'SET_QUERY', payload: q })
     dispatch({ type: 'SET_MODE', payload: 'loading' })
 
-    analyzePaper(state.query)
+    analyzePaper(q)
       .then((result) => {
         dispatch({
           type: 'SET_RESULTS',
