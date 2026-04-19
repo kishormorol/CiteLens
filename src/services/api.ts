@@ -141,33 +141,15 @@ export async function analyzePaper(query: string, limit = 20): Promise<AnalyzeRe
     }
   }
 
+  let res: Response
   try {
-    const res = await fetch(`${API_BASE}/api/analyze-paper`, {
+    res = await fetch(`${API_BASE}/api/analyze-paper`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ query, limit }),
     })
-
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status}`)
-    }
-
-    const data: ApiResponse = await res.json()
-
-    return {
-      papers: data.results.map(mapPaper),
-      seedPaper: mapSeedPaper(
-        data.seedPaper,
-        data.summary.totalCitingPapers,
-        data.summary.sourcesUsed,
-      ),
-      totalCiting: data.summary.totalCitingPapers,
-      sourcesUsed: data.summary.sourcesUsed,
-      usingDemoData: data.summary.mockMode,
-    }
   } catch {
-    // Network error, unexpected shape, or backend returning mock fallback —
-    // fall back silently to bundled demo data so the UI always works.
+    // Network error — backend unreachable, fall back to demo data
     return {
       papers: PAPERS,
       seedPaper: SEED_PAPER,
@@ -175,5 +157,34 @@ export async function analyzePaper(query: string, limit = 20): Promise<AnalyzeRe
       sourcesUsed: SEED_PAPER.sources,
       usingDemoData: true,
     }
+  }
+
+  // 404 = paper not found — surface the error to the user
+  if (res.status === 404) {
+    throw new Error('Paper not found')
+  }
+
+  // Other non-ok responses — fall back to demo data
+  if (!res.ok) {
+    return {
+      papers: PAPERS,
+      seedPaper: SEED_PAPER,
+      totalCiting: 1284,
+      sourcesUsed: SEED_PAPER.sources,
+      usingDemoData: true,
+    }
+  }
+
+  const data: ApiResponse = await res.json()
+  return {
+    papers: data.results.map(mapPaper),
+    seedPaper: mapSeedPaper(
+      data.seedPaper,
+      data.summary.totalCitingPapers,
+      data.summary.sourcesUsed,
+    ),
+    totalCiting: data.summary.totalCitingPapers,
+    sourcesUsed: data.summary.sourcesUsed,
+    usingDemoData: data.summary.mockMode,
   }
 }
