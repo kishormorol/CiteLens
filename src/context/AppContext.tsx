@@ -8,7 +8,7 @@ import { analyzePaper } from '../services/api'
 
 const DEFAULT_FILTERS: FiltersState = {
   yearFrom: 2018,
-  yearTo: 2025,
+  yearTo: new Date().getFullYear(),
   relevanceThreshold: 0,
   highlyInfluential: false,
   reviewOnly: false,

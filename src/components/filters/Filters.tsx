@@ -3,7 +3,7 @@ import { ResetIcon } from '../ui/Icons'
 import { useApp } from '../../context/AppContext'
 
 const YEAR_MIN = 2017
-const YEAR_MAX = 2025
+const YEAR_MAX = new Date().getFullYear()
 
 export function Filters() {
   const { state, dispatch } = useApp()
