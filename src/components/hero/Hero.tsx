@@ -161,7 +161,7 @@ export function Hero() {
                 <button
                   key={chip.label}
                   type="button"
-                  onClick={() => handleChipClick(chip.label)}
+                  onClick={() => handleChipClick(chip.query)}
                   className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs transition-colors hover:bg-[var(--bg-2)]"
                   style={{
                     borderColor: 'var(--line)',

@@ -239,11 +239,11 @@ export const PAPERS: Paper[] = [
   },
 ]
 
-export const EXAMPLE_CHIPS = [
-  { label: 'arXiv:1706.03762', type: 'arXiv' },
-  { label: 'DOI: 10.48550/arXiv...', type: 'DOI' },
-  { label: 'Semantic Scholar', type: 'S2' },
-  { label: 'Attention Is All You Need', type: 'title' },
+export const EXAMPLE_CHIPS: { label: string; query: string; type: string }[] = [
+  { label: 'arXiv:1706.03762', query: '1706.03762', type: 'arXiv' },
+  { label: '10.48550/arXiv.1706.03762', query: '10.48550/arXiv.1706.03762', type: 'DOI' },
+  { label: 'semanticscholar.org/…', query: 'https://www.semanticscholar.org/paper/Attention-is-All-you-Need-Vaswani-Shazeer/204e3073870fae3d05bcbc2f6a8e263d9b72e776', type: 'S2' },
+  { label: 'Attention Is All You Need', query: 'Attention Is All You Need', type: 'title' },
 ]
 
 export const ACCENTS: Record<AccentColor, AccentDef> = {
