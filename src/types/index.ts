@@ -28,8 +28,11 @@ export interface PaperBreakdown {
 
 export interface Paper {
   id: number
+  sourceId?: string
   title: string
   authors: string
+  authorNames?: string[]
+  authorIds?: string[]
   venue: string
   year: number
   citations: number
@@ -48,8 +51,11 @@ export interface Paper {
 }
 
 export interface SeedPaper {
+  sourceId?: string
   title: string
   authors: string
+  authorNames?: string[]
+  authorIds?: string[]
   venue: string
   year: number
   citations: string

@@ -18,10 +18,18 @@ interface ApiBreakdown {
   context: string
 }
 
+interface ApiAuthorObj {
+  id?: string | null
+  authorId?: string | null
+  name?: string | null
+}
+
+type ApiAuthor = string | ApiAuthorObj
+
 interface ApiRankedPaper {
   id: string
   title: string
-  authors: string[]
+  authors: ApiAuthor[]
   abstract?: string
   year?: number
   venue?: string
@@ -42,7 +50,7 @@ interface ApiRankedPaper {
 interface ApiSeedPaper {
   id: string
   title: string
-  authors: string[]
+  authors: ApiAuthor[]
   abstract?: string
   year?: number
   venue?: string
@@ -75,11 +83,29 @@ function toScore(v: number): number {
   return Math.round(Math.max(0, Math.min(1, v)) * 100)
 }
 
+function mapAuthors(authors: ApiAuthor[]): { names: string[]; ids: string[] } {
+  const names = authors
+    .map((author) => (typeof author === 'string' ? author : (author.name ?? '')))
+    .map((name) => name.trim())
+    .filter(Boolean)
+
+  const ids = authors
+    .map((author) => (typeof author === 'string' ? '' : (author.authorId ?? author.id ?? '')))
+    .map((id) => id.trim())
+    .filter(Boolean)
+
+  return { names, ids }
+}
+
 function mapPaper(result: ApiRankedPaper, index: number): Paper {
+  const authorMeta = mapAuthors(result.authors)
   return {
     id: index + 1,
+    sourceId: result.id,
     title: result.title,
-    authors: result.authors.join(', '),
+    authors: authorMeta.names.join(', '),
+    authorNames: authorMeta.names,
+    authorIds: authorMeta.ids,
     venue: result.venue ?? '',
     year: result.year ?? 0,
     citations: result.citationCount,
@@ -103,9 +129,13 @@ function mapSeedPaper(
   totalCiting: number,
   sourcesUsed: string[],
 ): SeedPaper {
+  const authorMeta = mapAuthors(seed.authors)
   return {
+    sourceId: seed.id,
     title: seed.title,
-    authors: seed.authors.join(', '),
+    authors: authorMeta.names.join(', '),
+    authorNames: authorMeta.names,
+    authorIds: authorMeta.ids,
     venue: seed.venue ?? '',
     year: seed.year ?? 0,
     citations: seed.citationCount.toLocaleString(),

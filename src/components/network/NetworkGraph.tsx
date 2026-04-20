@@ -22,7 +22,8 @@ import React, {
 } from 'react'
 import { useApp } from '../../context/AppContext'
 import { usePapers } from '../../hooks/usePapers'
-import type { Paper } from '../../types'
+import type { Paper, SeedPaper } from '../../types'
+import { isSeedPaperMatch, isSelfCitation } from '../../utils/selfCitation'
 
 // ─── Canvas dimensions ────────────────────────────────────────────────────────
 
@@ -31,8 +32,10 @@ const H = 500
 const CX = W / 2
 const CY = H / 2
 const SEED_R = 26
-const NODE_MIN = 6
-const NODE_MAX = 18
+const NODE_MIN = 7
+const NODE_MAX = 20
+const SELF_CITATION_COLOR = 'oklch(62% 0.19 24)'
+const SELF_CITATION_RING = 'oklch(72% 0.16 24)'
 
 // ─── Physics constants ────────────────────────────────────────────────────────
 
@@ -47,15 +50,23 @@ const TICK_CAP = 200     // max ticks (safety)
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface SimNode {
-  paper: Paper
+  paper: GraphPaper
   x: number
   y: number
   vx: number
   vy: number
   r: number
   color: string
+  stroke: string
   idealRadius: number
+  isSelfCitation: boolean
 }
+
+interface GraphPaper extends Paper {
+  isSelfCitation: boolean
+}
+
+type SelfCitationFilter = 'all' | 'only' | 'hide'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -70,7 +81,40 @@ function truncate(s: string, n: number) {
   return s.length <= n ? s : s.slice(0, n - 1) + '…'
 }
 
-function initNodes(papers: Paper[]): SimNode[] {
+function toAuthorInput(paper: Paper | SeedPaper) {
+  return {
+    authorIds: paper.authorIds,
+    authorNames: paper.authorNames,
+    authorsText: paper.authors,
+  }
+}
+
+function deriveGraphPapers(
+  papers: Paper[],
+  seedPaper: SeedPaper | null,
+  selfCitationFilter: SelfCitationFilter,
+): GraphPaper[] {
+  const enriched = papers.map((paper) => {
+    const matchesSeed = seedPaper ? isSelfCitation(toAuthorInput(seedPaper), toAuthorInput(paper)) : false
+    const looksLikeSeed = isSeedPaperMatch(
+      seedPaper?.title,
+      seedPaper?.year,
+      paper.title,
+      paper.year,
+    )
+
+    return {
+      ...paper,
+      isSelfCitation: looksLikeSeed ? false : matchesSeed,
+    }
+  })
+
+  if (selfCitationFilter === 'only') return enriched.filter((paper) => paper.isSelfCitation)
+  if (selfCitationFilter === 'hide') return enriched.filter((paper) => !paper.isSelfCitation)
+  return enriched
+}
+
+function initNodes(papers: GraphPaper[]): SimNode[] {
   if (!papers.length) return []
   const maxCit = Math.max(...papers.map((p) => p.citations), 1)
   return papers.map((paper, i) => {
@@ -87,7 +131,9 @@ function initNodes(papers: Paper[]): SimNode[] {
       vy: Math.sin(angle) * 2,
       r,
       color: scoreColor(paper.final),
+      stroke: paper.isSelfCitation ? SELF_CITATION_COLOR : scoreColor(paper.final),
       idealRadius,
+      isSelfCitation: paper.isSelfCitation,
     }
   })
 }
@@ -153,23 +199,33 @@ function runTick(nodes: SimNode[], alpha: number): SimNode[] {
 
 // ─── Force simulation hook ────────────────────────────────────────────────────
 
-function useForceSimulation(papers: Paper[]) {
+function useForceSimulation(papers: GraphPaper[]) {
   const [nodes, setNodes] = useState<SimNode[]>([])
+  const [isFrozen, setIsFrozen] = useState(false)
   const stateRef = useRef<{ nodes: SimNode[]; alpha: number; ticks: number }>({
     nodes: [],
     alpha: ALPHA_START,
     ticks: 0,
   })
+  const frozenRef = useRef(false)
   const rafRef = useRef<number>()
 
-  useEffect(() => {
-    const init = initNodes(papers)
-    stateRef.current = { nodes: init, alpha: ALPHA_START, ticks: 0 }
-    setNodes(init)
+  const stopLoop = useCallback(() => {
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current)
+      rafRef.current = undefined
+    }
+  }, [])
+
+  const startLoop = useCallback(() => {
+    if (rafRef.current || frozenRef.current) return
 
     function loop() {
       const s = stateRef.current
-      if (s.alpha < MIN_ALPHA || s.ticks >= TICK_CAP) return
+      if (frozenRef.current || s.alpha < MIN_ALPHA || s.ticks >= TICK_CAP) {
+        rafRef.current = undefined
+        return
+      }
       s.alpha *= 1 - ALPHA_DECAY
       s.ticks++
       s.nodes = runTick(s.nodes, s.alpha)
@@ -178,10 +234,15 @@ function useForceSimulation(papers: Paper[]) {
     }
 
     rafRef.current = requestAnimationFrame(loop)
-    return () => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current)
-    }
-  }, [papers])
+  }, [])
+
+  useEffect(() => {
+    const init = initNodes(papers)
+    stateRef.current = { nodes: init, alpha: ALPHA_START, ticks: 0 }
+    setNodes(init)
+    startLoop()
+    return stopLoop
+  }, [papers, startLoop, stopLoop])
 
   const moveNode = useCallback((id: number, x: number, y: number) => {
     stateRef.current.nodes = stateRef.current.nodes.map((nd) =>
@@ -191,23 +252,31 @@ function useForceSimulation(papers: Paper[]) {
     stateRef.current.alpha = Math.max(stateRef.current.alpha, 0.1)
     stateRef.current.ticks = 0
     setNodes([...stateRef.current.nodes])
+    startLoop()
+  }, [startLoop])
 
-    // Restart if settled
-    if (!rafRef.current) {
-      function loop() {
-        const s = stateRef.current
-        if (s.alpha < MIN_ALPHA || s.ticks >= TICK_CAP) { rafRef.current = undefined; return }
-        s.alpha *= 1 - ALPHA_DECAY
-        s.ticks++
-        s.nodes = runTick(s.nodes, s.alpha)
-        setNodes([...s.nodes])
-        rafRef.current = requestAnimationFrame(loop)
+  const resetLayout = useCallback(() => {
+    const init = initNodes(papers)
+    stateRef.current = { nodes: init, alpha: ALPHA_START, ticks: 0 }
+    setNodes(init)
+    startLoop()
+  }, [papers, startLoop])
+
+  const toggleFreeze = useCallback(() => {
+    setIsFrozen((prev) => {
+      const next = !prev
+      frozenRef.current = next
+      if (next) {
+        stopLoop()
+      } else {
+        stateRef.current.alpha = Math.max(stateRef.current.alpha, 0.08)
+        startLoop()
       }
-      rafRef.current = requestAnimationFrame(loop)
-    }
-  }, [])
+      return next
+    })
+  }, [startLoop, stopLoop])
 
-  return { nodes, moveNode }
+  return { nodes, moveNode, resetLayout, isFrozen, toggleFreeze }
 }
 
 // ─── SVG gradient edge ────────────────────────────────────────────────────────
@@ -222,21 +291,21 @@ function Edge({
     <line
       x1={x1} y1={y1} x2={x2} y2={y2}
       stroke={highlighted ? color : 'var(--line-2)'}
-      strokeWidth={highlighted ? 1.8 : 1}
-      strokeOpacity={faded ? 0.06 : highlighted ? 0.6 : 0.25}
-      style={{ transition: 'stroke-opacity 0.2s, stroke-width 0.2s' }}
+      strokeWidth={highlighted ? 2 : 0.9}
+      strokeOpacity={faded ? 0.04 : highlighted ? 0.62 : 0.16}
+      style={{ transition: 'stroke-opacity 0.16s, stroke-width 0.16s' }}
     />
   )
 }
 
 // ─── Hover tooltip ────────────────────────────────────────────────────────────
 
-interface TooltipState { paper: Paper; sx: number; sy: number }
+interface TooltipState { paper: GraphPaper; sx: number; sy: number }
 
 function Tooltip({ tip, cw }: { tip: TooltipState; cw: number }) {
-  const W_TIP = 220
+  const W_TIP = 246
   const left = tip.sx + W_TIP + 18 > cw ? tip.sx - W_TIP - 10 : tip.sx + 12
-  const top  = Math.max(6, tip.sy - 44)
+  const top  = Math.max(6, tip.sy - 62)
   return (
     <div
       className="absolute pointer-events-none z-20 rounded-xl border border-[var(--line)] px-3 py-2.5"
@@ -248,7 +317,7 @@ function Tooltip({ tip, cw }: { tip: TooltipState; cw: number }) {
       <p className="text-[10px] mt-0.5" style={{ color: 'var(--ink-4)' }}>
         {tip.paper.year || '—'}{tip.paper.venue ? ` · ${truncate(tip.paper.venue, 20)}` : ''}
       </p>
-      <div className="flex gap-4 mt-2">
+      <div className="flex gap-3 mt-2">
         {[
           { l: 'Final',   v: tip.paper.final,   c: 'var(--accent)'    },
           { l: 'Network', v: tip.paper.network,  c: 'var(--network)'   },
@@ -260,7 +329,14 @@ function Tooltip({ tip, cw }: { tip: TooltipState; cw: number }) {
           </div>
         ))}
       </div>
-      <p className="text-[9px] mt-1.5" style={{ color: 'var(--ink-5)' }}>Drag · Click to inspect</p>
+      <div className="mt-2.5 text-[10px] leading-snug" style={{ color: 'var(--ink-3)' }}>
+        <p>{tip.paper.citations.toLocaleString()} citations</p>
+        <p>Self-citation: {tip.paper.isSelfCitation ? 'Yes' : 'No'}</p>
+      </div>
+      <p className="text-[9px] mt-1.5" style={{ color: 'var(--ink-5)' }}>
+        {tip.paper.isSelfCitation ? 'Shares at least one seed author' : 'No shared seed author detected'}
+      </p>
+      <p className="text-[9px] mt-1" style={{ color: 'var(--ink-5)' }}>Drag · Click to inspect</p>
     </div>
   )
 }
@@ -283,7 +359,7 @@ function ScoreBar({ label, value, color }: { label: string; value: number; color
 
 function SelectedPanel({
   paper, onClose, onGo,
-}: { paper: Paper; onClose: () => void; onGo: () => void }) {
+}: { paper: GraphPaper; onClose: () => void; onGo: () => void }) {
   return (
     <div className="border-t border-[var(--line)] p-4" style={{ background: 'var(--bg-2)' }}>
       <div className="flex items-start justify-between gap-3 mb-3">
@@ -294,6 +370,7 @@ function SelectedPanel({
             <span>{paper.year || '—'}</span>
             {paper.venue && <><span>·</span><span>{truncate(paper.venue, 30)}</span></>}
             <span>·</span><span>{paper.citations.toLocaleString()} citations</span>
+            <span>·</span><span>{paper.isSelfCitation ? 'Self-citation' : 'External citation'}</span>
           </div>
         </div>
         <button onClick={onClose} className="flex-shrink-0 text-[11px] px-2 py-1 rounded"
@@ -316,9 +393,29 @@ function SelectedPanel({
 
 // ─── Legend ───────────────────────────────────────────────────────────────────
 
-function Legend() {
+function Legend({
+  selfCitations,
+  total,
+}: {
+  selfCitations: number
+  total: number
+}) {
   return (
-    <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5">
+    <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+      <div className="flex items-center gap-1.5">
+        <span className="rounded-full inline-block" style={{ width: 10, height: 10, background: 'var(--accent)' }} />
+        <span className="text-[11px]" style={{ color: 'var(--ink-3)' }}>Seed paper</span>
+      </div>
+      <div className="flex items-center gap-1.5">
+        <span className="rounded-full inline-block" style={{ width: 9, height: 9, border: '1.5px solid var(--line-2)', background: 'var(--bg-1)' }} />
+        <span className="text-[11px]" style={{ color: 'var(--ink-3)' }}>Regular paper</span>
+      </div>
+      <div className="flex items-center gap-1.5">
+        <span className="rounded-full inline-block" style={{ width: 9, height: 9, border: `2px solid ${SELF_CITATION_RING}`, background: 'var(--bg-1)' }} />
+        <span className="text-[11px]" style={{ color: 'var(--ink-3)' }}>
+          Self-citation ({selfCitations}/{total})
+        </span>
+      </div>
       <span className="text-xs font-medium" style={{ color: 'var(--ink-3)' }}>Final score</span>
       {[
         { color: 'var(--accent)',    label: '75–100' },
@@ -341,17 +438,26 @@ function Legend() {
 export function NetworkGraph() {
   const { state, dispatch } = useApp()
   const papers = usePapers()
-  const { nodes, moveNode } = useForceSimulation(papers)
+  const [selfCitationFilter, setSelfCitationFilter] = useState<SelfCitationFilter>('all')
+  const graphPapers = useMemo(
+    () => deriveGraphPapers(papers, state.seedPaper, selfCitationFilter),
+    [papers, state.seedPaper, selfCitationFilter],
+  )
+  const { nodes, moveNode, resetLayout, isFrozen, toggleFreeze } = useForceSimulation(graphPapers)
 
   const [tooltip, setTooltip]     = useState<TooltipState | null>(null)
   const [hoveredId, setHoveredId] = useState<number | null>(null)
-  const [panelPaper, setPanelPaper] = useState<Paper | null>(null)
+  const [panelPaper, setPanelPaper] = useState<GraphPaper | null>(null)
   const [dragging, setDragging]   = useState<{ id: number; ox: number; oy: number } | null>(null)
   const svgRef     = useRef<SVGSVGElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
-  // Clear panel when papers change (new search)
-  useEffect(() => { setPanelPaper(null) }, [papers])
+  // Clear panel when papers or graph filters change (new search/view)
+  useEffect(() => {
+    setPanelPaper(null)
+    setHoveredId(null)
+    setTooltip(null)
+  }, [graphPapers])
 
   // ── SVG coordinate helper ────────────────────────────────────────────────────
   function toSVG(clientX: number, clientY: number): [number, number] {
@@ -380,7 +486,7 @@ export function NetworkGraph() {
   function onSVGMouseUp() { setDragging(null) }
 
   // ── Hover handlers ───────────────────────────────────────────────────────────
-  function onNodeMouseEnter(e: React.MouseEvent, paper: Paper) {
+  function onNodeMouseEnter(e: React.MouseEvent, paper: GraphPaper) {
     if (dragging) return
     const rect = containerRef.current!.getBoundingClientRect()
     setHoveredId(paper.id)
@@ -396,31 +502,41 @@ export function NetworkGraph() {
   function onNodeMouseLeave() { if (!dragging) { setHoveredId(null); setTooltip(null) } }
 
   // ── Click ────────────────────────────────────────────────────────────────────
-  function onNodeClick(paper: Paper) {
+  function onNodeClick(paper: GraphPaper) {
     if (dragging) return
     setPanelPaper((prev) => (prev?.id === paper.id ? null : paper))
     dispatch({ type: 'SELECT_PAPER', payload: paper.id })
   }
 
+  function onCanvasClick() {
+    if (dragging) return
+    setPanelPaper(null)
+    setHoveredId(null)
+    setTooltip(null)
+    dispatch({ type: 'SELECT_PAPER', payload: null })
+  }
+
   // ── Top-N label set ──────────────────────────────────────────────────────────
   const labelIds = useMemo(() => {
-    const sorted = [...papers].sort((a, b) => b.final - a.final)
+    const sorted = [...graphPapers].sort((a, b) => b.final - a.final)
     return new Set(sorted.slice(0, 5).map((p) => p.id))
-  }, [papers])
+  }, [graphPapers])
 
-  if (papers.length === 0) {
+  if (graphPapers.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 px-4 rounded-2xl border border-dashed border-[var(--line)]"
         style={{ background: 'var(--bg-1)' }}>
-        <p className="text-base font-medium mb-1" style={{ color: 'var(--ink-3)' }}>No papers match these filters</p>
-        <p className="text-sm" style={{ color: 'var(--ink-4)' }}>Try widening the year range or lowering the relevance threshold</p>
+        <p className="text-base font-medium mb-1" style={{ color: 'var(--ink-3)' }}>No papers match this network view</p>
+        <p className="text-sm" style={{ color: 'var(--ink-4)' }}>Try adjusting the self-citation filter or relevance constraints</p>
       </div>
     )
   }
 
-  const dimmed   = hoveredId !== null || dragging !== null
-  const avgFinal = Math.round(papers.reduce((s, p) => s + p.final, 0) / papers.length)
-  const topNet   = Math.max(...papers.map((p) => p.network))
+  const activeId = panelPaper?.id ?? hoveredId
+  const dimmed   = activeId !== null || dragging !== null
+  const avgFinal = Math.round(graphPapers.reduce((s, p) => s + p.final, 0) / graphPapers.length)
+  const topNet   = Math.max(...graphPapers.map((p) => p.network))
+  const selfCitations = graphPapers.filter((paper) => paper.isSelfCitation).length
   const cw       = containerRef.current?.offsetWidth ?? 800
 
   return (
@@ -430,9 +546,10 @@ export function NetworkGraph() {
       <div className="rounded-2xl border border-[var(--line)] p-5" style={{ background: 'var(--bg-1)' }}>
         <div className="flex flex-wrap gap-8 mb-4">
           {[
-            { v: papers.length.toString(), l: 'papers in graph',   c: 'var(--accent)'  },
+            { v: graphPapers.length.toString(), l: 'papers in graph',   c: 'var(--accent)'  },
             { v: `${topNet}`,              l: 'top network score', c: 'var(--network)' },
             { v: `${avgFinal}`,            l: 'avg final score',   c: 'var(--impact)'  },
+            { v: `${selfCitations}`,       l: 'self-citations',    c: SELF_CITATION_COLOR },
           ].map(({ v, l, c }) => (
             <div key={l}>
               <div className="text-3xl font-mono font-semibold leading-none" style={{ color: c }}>{v}</div>
@@ -440,7 +557,62 @@ export function NetworkGraph() {
             </div>
           ))}
         </div>
-        <Legend />
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+          <Legend selfCitations={selfCitations} total={graphPapers.length} />
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={() => setSelfCitationFilter('all')}
+              className="text-[11px] px-2.5 py-1 rounded-md border"
+              style={{
+                color: selfCitationFilter === 'all' ? 'var(--accent-ink)' : 'var(--ink-3)',
+                background: selfCitationFilter === 'all' ? 'var(--accent-weak)' : 'var(--bg-1)',
+                borderColor: selfCitationFilter === 'all' ? 'var(--accent-line)' : 'var(--line)',
+              }}
+            >
+              All
+            </button>
+            <button
+              onClick={() => setSelfCitationFilter('only')}
+              className="text-[11px] px-2.5 py-1 rounded-md border"
+              style={{
+                color: selfCitationFilter === 'only' ? SELF_CITATION_COLOR : 'var(--ink-3)',
+                background: selfCitationFilter === 'only' ? 'color-mix(in oklch, var(--bg-1) 84%, oklch(62% 0.19 24) 16%)' : 'var(--bg-1)',
+                borderColor: selfCitationFilter === 'only' ? SELF_CITATION_RING : 'var(--line)',
+              }}
+            >
+              Self only
+            </button>
+            <button
+              onClick={() => setSelfCitationFilter('hide')}
+              className="text-[11px] px-2.5 py-1 rounded-md border"
+              style={{
+                color: selfCitationFilter === 'hide' ? 'var(--accent-ink)' : 'var(--ink-3)',
+                background: selfCitationFilter === 'hide' ? 'var(--accent-weak)' : 'var(--bg-1)',
+                borderColor: selfCitationFilter === 'hide' ? 'var(--accent-line)' : 'var(--line)',
+              }}
+            >
+              Hide self
+            </button>
+            <button
+              onClick={resetLayout}
+              className="text-[11px] px-2.5 py-1 rounded-md border"
+              style={{ color: 'var(--ink-3)', background: 'var(--bg-1)', borderColor: 'var(--line)' }}
+            >
+              Reset layout
+            </button>
+            <button
+              onClick={toggleFreeze}
+              className="text-[11px] px-2.5 py-1 rounded-md border"
+              style={{
+                color: isFrozen ? 'var(--accent-ink)' : 'var(--ink-3)',
+                background: isFrozen ? 'var(--accent-weak)' : 'var(--bg-1)',
+                borderColor: isFrozen ? 'var(--accent-line)' : 'var(--line)',
+              }}
+            >
+              {isFrozen ? 'Unfreeze' : 'Freeze'}
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Graph */}
@@ -454,6 +626,7 @@ export function NetworkGraph() {
           onMouseMove={onSVGMouseMove}
           onMouseUp={onSVGMouseUp}
           onMouseLeave={onSVGMouseUp}
+          onClick={onCanvasClick}
           aria-label="Citation network graph"
         >
           <defs>
@@ -475,9 +648,9 @@ export function NetworkGraph() {
             <Edge
               key={`e-${nd.paper.id}`}
               x1={CX} y1={CY} x2={nd.x} y2={nd.y}
-              color={nd.color}
-              highlighted={nd.paper.id === hoveredId || nd.paper.id === panelPaper?.id}
-              faded={dimmed && nd.paper.id !== hoveredId && nd.paper.id !== panelPaper?.id}
+              color={nd.isSelfCitation ? SELF_CITATION_COLOR : nd.color}
+              highlighted={nd.paper.id === activeId}
+              faded={dimmed && nd.paper.id !== activeId}
             />
           ))}
 
@@ -487,7 +660,8 @@ export function NetworkGraph() {
             const isSel  = nd.paper.id === panelPaper?.id
             const isDrag = nd.paper.id === dragging?.id
             const fade   = dimmed && !isHov && !isSel && !isDrag
-            const showLabel = labelIds.has(nd.paper.id) && !dragging
+            const showLabel = (labelIds.has(nd.paper.id) || isHov || isSel) && !dragging
+            const nodeStroke = nd.isSelfCitation ? SELF_CITATION_COLOR : nd.stroke
 
             // Label position: outward from center
             const dx = nd.x - CX, dy = nd.y - CY
@@ -508,29 +682,42 @@ export function NetworkGraph() {
                 onMouseEnter={(e) => onNodeMouseEnter(e, nd.paper)}
                 onMouseMove={onNodeMouseMove}
                 onMouseLeave={onNodeMouseLeave}
-                onClick={() => onNodeClick(nd.paper)}
+                onClick={(e) => { e.stopPropagation(); onNodeClick(nd.paper) }}
                 role="button"
                 aria-label={nd.paper.title}
               >
                 {/* Aura */}
-                <circle cx={nd.x} cy={nd.y} r={nd.r + 7} fill={nd.color}
-                  opacity={isSel ? 0.3 : isHov ? 0.2 : 0.07}
+                <circle cx={nd.x} cy={nd.y} r={nd.r + 7} fill={nd.isSelfCitation ? SELF_CITATION_COLOR : nd.color}
+                  opacity={isSel ? 0.28 : isHov ? 0.2 : nd.isSelfCitation ? 0.1 : 0.05}
                   style={{ transition: 'opacity 0.15s' }} />
 
                 {/* Body */}
                 <circle
                   cx={nd.x} cy={nd.y} r={nd.r}
-                  fill={isHov || isSel ? nd.color : 'var(--bg-1)'}
-                  stroke={nd.color}
-                  strokeWidth={isSel ? 2.5 : 1.5}
+                  fill={isHov || isSel ? nd.color : nd.isSelfCitation ? 'color-mix(in oklch, var(--bg-1) 82%, oklch(62% 0.19 24) 18%)' : 'var(--bg-1)'}
+                  stroke={nodeStroke}
+                  strokeWidth={isSel ? 2.8 : nd.isSelfCitation ? 2.2 : 1.6}
                   filter={isHov || isSel ? 'url(#ng-glow)' : undefined}
                   style={{ transition: 'fill 0.15s, stroke-width 0.15s' }}
                 />
 
+                {/* Self-citation ring */}
+                {nd.isSelfCitation && (
+                  <circle
+                    cx={nd.x}
+                    cy={nd.y}
+                    r={nd.r + 4}
+                    fill="none"
+                    stroke={SELF_CITATION_RING}
+                    strokeWidth={isSel ? 1.8 : 1.3}
+                    strokeOpacity={isHov || isSel ? 0.9 : 0.65}
+                  />
+                )}
+
                 {/* Selection dashed ring */}
                 {isSel && (
                   <circle cx={nd.x} cy={nd.y} r={nd.r + 9}
-                    fill="none" stroke={nd.color}
+                    fill="none" stroke={nodeStroke}
                     strokeWidth="1.5" strokeDasharray="3 3"
                   />
                 )}
@@ -539,7 +726,7 @@ export function NetworkGraph() {
                 {showLabel && (
                   <text x={lx} y={ly} textAnchor={anchor} dominantBaseline="middle"
                     fontSize="9" fontFamily="Inter, system-ui, sans-serif"
-                    fill="var(--ink-3)"
+                    fill={isHov || isSel ? 'var(--ink)' : 'var(--ink-3)'}
                     style={{ pointerEvents: 'none', userSelect: 'none' }}>
                     {truncate(nd.paper.title, 26)}
                   </text>
@@ -576,8 +763,8 @@ export function NetworkGraph() {
       </div>
 
       <p className="text-xs text-center" style={{ color: 'var(--ink-4)' }}>
-        Nodes fly to position on load. Drag to rearrange. Hover to preview · Click to inspect.
-        Distance from seed ≈ relevance score.
+        Drag to rearrange · Hover for metadata · Click to pin details.
+        Distance from seed ≈ relevance score. Self-citations are outlined in red.
       </p>
     </div>
   )
