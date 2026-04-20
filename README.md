@@ -59,6 +59,7 @@ Weights are renormalized when a signal is missing. Every result shows the full b
 - **Per-paper explanations** — plain-English "Why ranked here" for every result
 - **Smart filters** — year range, minimum relevance score, influential-only, reviews-only
 - **Timeline view** — visualize how citation activity has grown year by year
+- **Network graph** — interactive radial citation map; node size = citations, color = score tier, rings encode relevance distance from seed; hover to preview, click to inspect score breakdown
 - **Four sort modes** — Most Influential, Most Relevant, Recent, Reviews
 - **Dark mode** — full token-driven palette, five accent colors, compact/cozy density
 - **Zero config** — works out of the box in demo mode with no API keys
@@ -247,7 +248,7 @@ VITE_API_BASE_URL=http://localhost:8000
 ```
 CiteLens/
 ├── src/                        # React + TypeScript frontend
-│   ├── components/             # UI — Hero, Filters, Results, Navbar, Modals
+│   ├── components/             # UI — Hero, Filters, Results, Network, Timeline, Modals
 │   ├── context/AppContext.tsx  # Global state (useReducer + AbortController)
 │   ├── hooks/usePapers.ts      # Memoized filter + sort
 │   ├── services/api.ts         # Backend client with demo fallback
@@ -269,12 +270,12 @@ CiteLens/
 - [x] Four-signal ranking (Impact, Network, Relevance, Context)
 - [x] Per-paper explainability — plain-English score breakdown
 - [x] Timeline view — citation arc over time
+- [x] Network graph — interactive radial citation map with score tiers and hover inspection
 - [x] Dark mode, five accent themes, density modes
 - [x] Full frontend ↔ backend integration
 - [x] React error boundary + input validation
 - [ ] Semantic embeddings (SPECTER2) for higher-quality relevance
 - [ ] Citation context snippets — *how* a paper was cited, not just that it was
-- [ ] Citation graph visualization
 - [ ] Export to BibTeX / CSV
 - [ ] Email alerts for new influential citations
 - [ ] Per-IP rate limiting + result caching
