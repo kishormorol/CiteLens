@@ -16,6 +16,7 @@ from fastapi.responses import JSONResponse
 from app.config import settings
 from app.routes import health, papers
 from app.utils.exceptions import CiteLensError, to_http_exception
+from app.middleware.rate_limit import RateLimitMiddleware
 
 # ---------------------------------------------------------------------------
 # Logging
@@ -47,10 +48,11 @@ app.add_middleware(
     allow_origins=settings.allowed_origins_list,
     allow_credentials=False,
     allow_methods=["GET", "POST", "OPTIONS"],
-    # Allow all headers — we don't use credentials so this is safe.
-    # Keeps the list from becoming a maintenance burden as the frontend evolves.
     allow_headers=["*"],
 )
+
+# Rate limiting — applied before CORS so rate-limited requests are still CORS-safe
+app.add_middleware(RateLimitMiddleware)
 
 # ---------------------------------------------------------------------------
 # Exception handlers

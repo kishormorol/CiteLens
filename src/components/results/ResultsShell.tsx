@@ -17,6 +17,7 @@ import {
   serializeCsv,
   toBibtex,
   toCsvRows,
+  toJson,
 } from '../../utils/exportResults'
 import type { Paper, ResultsTab } from '../../types'
 
@@ -127,6 +128,15 @@ export function ResultsShell() {
     )
   }
 
+  function handleExportJson() {
+    if (!hasVisibleRankedResults) return
+    downloadTextFile(
+      `citelens-results-${getExportDateStamp()}.json`,
+      'application/json;charset=utf-8',
+      toJson(papers, state.seedPaper),
+    )
+  }
+
   function handleExportBibtex() {
     if (!hasVisibleRankedResults) return
 
@@ -181,6 +191,9 @@ export function ResultsShell() {
             </GhostButton>
             <GhostButton size="sm" disabled={!hasVisibleRankedResults} onClick={handleExportBibtex}>
               Export BibTeX
+            </GhostButton>
+            <GhostButton size="sm" disabled={!hasVisibleRankedResults} onClick={handleExportJson}>
+              Export JSON
             </GhostButton>
           </div>
         )}

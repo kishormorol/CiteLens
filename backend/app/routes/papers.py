@@ -8,7 +8,7 @@ POST /api/analyze-paper     — full pipeline: resolve → fetch → enrich → 
 """
 
 import logging
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 
 from app.config import settings
 from app.models.api import (
@@ -29,9 +29,20 @@ from app.services import mock_data_service as mock
 from app.utils.exceptions import (
     InputParseError, PaperNotFoundError, UpstreamAPIError, to_http_exception, CiteLensError,
 )
+from app.utils.cache import response_cache, make_cache_key
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api", tags=["papers"])
+
+
+def _make_paper_cache_key(paper_id: str, limit: int) -> str:
+    """
+    Build a cache key from the resolved canonical paper ID, not the raw query.
+
+    This means equivalent inputs — arXiv ID, DOI, full URL, title — all
+    resolve to the same cache entry once the paper is identified.
+    """
+    return make_cache_key(paper_id, limit)
 
 
 # ---------------------------------------------------------------------------
@@ -143,6 +154,10 @@ async def analyze_paper(req: AnalyzePaperRequest) -> dict:
         data["summary"]["rankedCandidates"] = len(data["results"])
         return data
 
+    # Check cache before hitting upstream APIs.
+    # NOTE: we don't cache yet — we need the resolved paper ID first.
+    # The cache lookup happens after step 2 (resolve) below.
+
     # --- 1. Parse -----------------------------------------------------------
     try:
         parsed = parser.parse_input(req.query)
@@ -164,6 +179,20 @@ async def analyze_paper(req: AnalyzePaperRequest) -> dict:
 
     seed_ss_id = seed.semantic_scholar_id
     seed_oa_id = seed.openalex_id
+
+    # Derive canonical ID for cache key: prefer SS ID, then OA ID, then arXiv ID
+    canonical_id = (
+        seed_ss_id
+        or seed_oa_id
+        or getattr(seed, "arxiv_id", None)
+        or seed.title.lower().strip()
+    )
+    cache_key = _make_paper_cache_key(canonical_id, req.limit)
+    cached = await response_cache.get(cache_key)
+    if cached is not None:
+        logger.info("Cache hit for paper '%s'", seed.title[:60])
+        cached["summary"]["cachedResponse"] = True
+        return cached
 
     if not seed_ss_id and not seed_oa_id:
         raise HTTPException(
@@ -224,4 +253,57 @@ async def analyze_paper(req: AnalyzePaperRequest) -> dict:
         sources_used=list(set(sources_used)),
         mock_mode=False,
     )
-    return response.model_dump(by_alias=True)
+    result_data = response.model_dump(by_alias=True)
+
+    # Cache the successful response
+    await response_cache.set(cache_key, result_data)
+    logger.info("Cached response for '%s' (key: %s)", seed.title[:60], cache_key[:12])
+
+    return result_data
+
+
+# ---------------------------------------------------------------------------
+# GET /api/stats  — operational metrics
+# ---------------------------------------------------------------------------
+
+@router.get("/stats", tags=["meta"])
+async def api_stats() -> dict:
+    """Return operational stats: cache size, configuration summary."""
+    return {
+        "cache": {
+            "size": response_cache.size,
+            "max_entries": 256,
+            "ttl_seconds": 300,
+        },
+        "version": "1.0.0",
+    }
+
+
+# ---------------------------------------------------------------------------
+# POST /api/cache/clear  — admin cache invalidation (secret-protected)
+# ---------------------------------------------------------------------------
+
+@router.post("/cache/clear", tags=["admin"])
+async def clear_cache(request: Request) -> dict:
+    """
+    Clear the in-memory response cache.
+
+    Requires the X-Admin-Secret header to match CACHE_CLEAR_SECRET.
+    If CACHE_CLEAR_SECRET is not configured this endpoint always returns 403.
+    """
+    secret = settings.CACHE_CLEAR_SECRET
+    if not secret:
+        raise HTTPException(
+            status_code=403,
+            detail="Cache management is disabled. Set CACHE_CLEAR_SECRET to enable it.",
+        )
+
+    provided = request.headers.get("x-admin-secret", "")
+    if not provided or provided != secret:
+        logger.warning("Rejected cache-clear attempt with wrong or missing secret")
+        raise HTTPException(status_code=403, detail="Invalid or missing X-Admin-Secret header.")
+
+    size_before = response_cache.size
+    await response_cache.clear()
+    logger.info("Cache cleared by admin request (%d entries removed)", size_before)
+    return {"cleared": size_before, "message": "Cache cleared successfully."}

@@ -46,9 +46,9 @@ def _merge(a: RawPaper, b: RawPaper) -> RawPaper:
         updates["openalex_id"] = extra.openalex_id
     if not base.abstract and extra.abstract:
         updates["abstract"] = extra.abstract
-    if not base.citation_normalized_percentile and extra.citation_normalized_percentile:
+    if base.citation_normalized_percentile is None and extra.citation_normalized_percentile is not None:
         updates["citation_normalized_percentile"] = extra.citation_normalized_percentile
-    if not base.fwci and extra.fwci:
+    if base.fwci is None and extra.fwci is not None:
         updates["fwci"] = extra.fwci
     if extra.is_highly_influential:
         updates["is_highly_influential"] = True

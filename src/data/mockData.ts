@@ -27,6 +27,7 @@ export const PAPERS: Paper[] = [
     final: 97,
     badges: ['Direct Citation', 'Highly Influential'],
     review: false,
+    highlyInfluential: true,
     why: 'BERT directly extends the Transformer architecture from "Attention Is All You Need" to pre-training, achieving state-of-the-art on 11 NLP tasks. It has the highest network centrality among all citing papers.',
     breakdown: {
       impact:
@@ -55,6 +56,7 @@ export const PAPERS: Paper[] = [
     final: 94,
     badges: ['Direct Citation', 'Highly Influential'],
     review: false,
+    highlyInfluential: true,
     why: 'GPT-3 scales the Transformer decoder to 175B parameters, demonstrating few-shot learning capabilities that redefined what language models can do without fine-tuning.',
     breakdown: {
       impact:
@@ -83,6 +85,7 @@ export const PAPERS: Paper[] = [
     final: 90,
     badges: ['Direct Citation', 'Cross-domain'],
     review: false,
+    highlyInfluential: false,
     why: 'ViT transplants the pure Transformer architecture into computer vision, proving that attention mechanisms are not limited to sequential data — a pivotal cross-domain validation of the seed paper.',
     breakdown: {
       impact:
@@ -111,6 +114,7 @@ export const PAPERS: Paper[] = [
     final: 86,
     badges: ['Survey', 'Comprehensive'],
     review: true,
+    highlyInfluential: false,
     why: 'This comprehensive survey organizes the entire Transformer literature — 500+ papers — into a coherent taxonomy of variants, making it the primary reference for new researchers entering the field.',
     breakdown: {
       impact:
@@ -139,6 +143,7 @@ export const PAPERS: Paper[] = [
     final: 85,
     badges: ['Foundational', 'arXiv'],
     review: false,
+    highlyInfluential: false,
     why: 'Establishes the empirical scaling laws that govern how Transformer performance improves with model size, data, and compute — directly enabling the rational design of subsequent large Transformer models.',
     breakdown: {
       impact:
@@ -167,6 +172,7 @@ export const PAPERS: Paper[] = [
     final: 80,
     badges: ['Survey', 'Efficiency'],
     review: true,
+    highlyInfluential: false,
     why: 'Systematically categorizes all approaches to making Transformers computationally efficient — a direct response to the quadratic complexity bottleneck identified after the seed paper.',
     breakdown: {
       impact:
@@ -195,6 +201,7 @@ export const PAPERS: Paper[] = [
     final: 83,
     badges: ['Direct Citation', 'Systems'],
     review: false,
+    highlyInfluential: false,
     why: 'FlashAttention makes exact attention 2–4× faster and 5–20× more memory efficient by restructuring the computation to minimize HBM reads/writes — a crucial engineering breakthrough for running large Transformers.',
     breakdown: {
       impact:
@@ -223,6 +230,7 @@ export const PAPERS: Paper[] = [
     final: 77,
     badges: ['Direct Citation', 'Long Context'],
     review: false,
+    highlyInfluential: false,
     why: 'Longformer introduces a linear-scaling sliding-window attention that enables processing documents up to 4,096 tokens — directly addressing the quadratic complexity of the seed paper\'s attention mechanism.',
     breakdown: {
       impact:

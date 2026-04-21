@@ -19,9 +19,9 @@ export function usePapers(): Paper[] {
       list = list.filter((p) => p.relevance >= filters.relevanceThreshold)
     }
 
-    // Filter by highly influential
+    // Filter by highly influential — use the authoritative boolean field
     if (filters.highlyInfluential) {
-      list = list.filter((p) => p.badges.includes('Highly Influential'))
+      list = list.filter((p) => p.highlyInfluential)
     }
 
     // Filter by review only

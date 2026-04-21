@@ -41,7 +41,7 @@ def _breakdown(paper: RawPaper, scored: ScoredPaper) -> ScoreBreakdown:
 
     network_desc = (
         "Based on local citation network PageRank across candidate set."
-        if scored.network_score > 0
+        if getattr(scored.paper, "reference_ids", None)
         else "Citation count proxy (reference data unavailable)."
     )
 

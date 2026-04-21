@@ -11,8 +11,15 @@ export function SeedCard() {
 
   if (!paper) return null
 
+  // Total citing papers from backend; filtered count if filters are narrowing results
+  const totalCiting = paper.citingCount
+  const filteredCount = papers.length
+  // Check if we have both total and filtered, and they differ
+  const isFiltered = hasResults && parseInt(totalCiting.replace(/,/g, '')) > filteredCount
   const subtitle = hasResults
-    ? `Found ${papers.length} citing papers`
+    ? isFiltered
+      ? `Showing ${filteredCount} of ${totalCiting} citing papers`
+      : `Found ${totalCiting} citing papers`
     : 'Analyzing citing papers…'
 
   return (

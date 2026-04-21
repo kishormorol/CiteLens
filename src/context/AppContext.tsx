@@ -5,6 +5,7 @@ import type {
   FiltersState,
 } from '../types'
 import { analyzePaper } from '../services/api'
+import { useSearchHistory } from '../hooks/useSearchHistory'
 
 const DEFAULT_FILTERS: FiltersState = {
   yearFrom: 2018,
@@ -87,6 +88,9 @@ interface AppContextValue {
   state: AppState
   dispatch: React.Dispatch<AppAction>
   analyze: (queryOverride?: string) => void
+  searchHistory: import('../hooks/useSearchHistory').SearchHistoryEntry[]
+  removeHistoryEntry: (q: string) => void
+  clearHistory: () => void
 }
 
 const AppContext = createContext<AppContextValue | null>(null)
@@ -94,8 +98,11 @@ const AppContext = createContext<AppContextValue | null>(null)
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(reducer, initialState)
   const abortRef = useRef<AbortController | null>(null)
+  const { history: searchHistory, addEntry, removeEntry: removeHistoryEntry, clearHistory } = useSearchHistory()
 
   const analyze = useCallback((queryOverride?: string) => {
+    // Use the override if provided; otherwise read directly from state.query
+    // We pass queryOverride explicitly from all call sites to avoid stale closure issues
     const q = queryOverride ?? state.query
     if (!q.trim()) return
 
@@ -109,25 +116,26 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     analyzePaper(q, 20, controller.signal)
       .then((result) => {
-        dispatch({
-          type: 'SET_RESULTS',
-          payload: {
+        dispatch({ type: 'SET_RESULTS', payload: {
             papers: result.papers,
             seedPaper: result.seedPaper,
             usingDemoData: result.usingDemoData,
           },
         })
         dispatch({ type: 'SET_MODE', payload: 'results' })
+        // Persist successful search to history
+        addEntry(q)
       })
       .catch((err) => {
         // Ignore aborted requests — a newer request is already in flight
         if (err instanceof DOMException && err.name === 'AbortError') return
         dispatch({ type: 'SET_MODE', payload: 'error' })
       })
-  }, [state.query])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.query, dispatch])
 
   return (
-    <AppContext.Provider value={{ state, dispatch, analyze }}>
+    <AppContext.Provider value={{ state, dispatch, analyze, searchHistory, removeHistoryEntry, clearHistory }}>
       {children}
     </AppContext.Provider>
   )
