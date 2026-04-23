@@ -131,8 +131,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         if (err instanceof DOMException && err.name === 'AbortError') return
         dispatch({ type: 'SET_MODE', payload: 'error' })
       })
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.query, dispatch])
+  }, [state.query, dispatch, addEntry])
 
   return (
     <AppContext.Provider value={{ state, dispatch, analyze, searchHistory, removeHistoryEntry, clearHistory }}>

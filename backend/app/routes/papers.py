@@ -191,8 +191,9 @@ async def analyze_paper(req: AnalyzePaperRequest) -> dict:
     cached = await response_cache.get(cache_key)
     if cached is not None:
         logger.info("Cache hit for paper '%s'", seed.title[:60])
-        cached["summary"]["cachedResponse"] = True
-        return cached
+        result = dict(cached)
+        result["summary"] = {**cached["summary"], "cachedResponse": True}
+        return result
 
     if not seed_ss_id and not seed_oa_id:
         raise HTTPException(
