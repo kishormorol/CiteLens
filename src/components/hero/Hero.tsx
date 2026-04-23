@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react'
+import React, { useRef, useEffect, useState } from 'react'
 import { SparkleIcon } from '../ui/Icons'
 import { useApp } from '../../context/AppContext'
 import type { AnalyzeMode } from '../../types'
@@ -12,14 +12,19 @@ const ANALYZE_MODES: { value: AnalyzeMode; label: string }[] = [
 ]
 
 export function Hero() {
-  const { state, dispatch, analyze } = useApp()
+  const { state, dispatch, analyze, searchHistory, removeHistoryEntry, clearHistory } = useApp()
   const { query, analyzeMode, mode } = state
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const [showHistory, setShowHistory] = useState(false)
 
   const isLoading = mode === 'loading'
   const hasResults = mode === 'results'
-
   const queryTooLong = query.length > 500
+
+  // Recent history to show (up to 5, exclude current query)
+  const recentHistory = searchHistory
+    .filter((e) => e.query !== query.trim())
+    .slice(0, 5)
 
   useEffect(() => {
     function focusInput() {
@@ -43,17 +48,20 @@ export function Hero() {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!query.trim() || queryTooLong) return
+    setShowHistory(false)
     analyze()
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
       e.preventDefault()
-      if (query.trim()) analyze()
+      if (query.trim()) { setShowHistory(false); analyze() }
     }
+    if (e.key === 'Escape') setShowHistory(false)
   }
 
   function handleChipClick(query: string) {
+    setShowHistory(false)
     analyze(query)
   }
 
@@ -110,7 +118,44 @@ export function Hero() {
         )}
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3 relative">
+          {/* Search history dropdown — outside the overflow-hidden card */}
+          {showHistory && recentHistory.length > 0 && (
+            <div
+              className="absolute left-0 right-0 z-30 rounded-xl border border-[var(--line)] overflow-hidden"
+              style={{ background: 'var(--bg-1)', boxShadow: 'var(--shadow-lg)', top: '100%', marginTop: 4 }}
+            >
+              <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--line)]" style={{ background: 'var(--bg-2)' }}>
+                <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--ink-4)' }}>Recent searches</span>
+                <button
+                  onClick={() => { clearHistory(); setShowHistory(false) }}
+                  className="text-[10px] hover:opacity-80"
+                  style={{ color: 'var(--ink-4)' }}
+                >Clear all</button>
+              </div>
+              {recentHistory.map((entry) => (
+                <div
+                  key={entry.query}
+                  className="flex items-center group hover:bg-[var(--bg-2)] transition-colors"
+                >
+                  <button
+                    className="flex-1 text-left px-3 py-2.5 text-sm truncate"
+                    style={{ color: 'var(--ink-2)' }}
+                    onMouseDown={(e) => { e.preventDefault(); handleChipClick(entry.query) }}
+                  >
+                    {entry.query}
+                  </button>
+                  <button
+                    className="flex-shrink-0 px-3 py-2.5 opacity-0 group-hover:opacity-100 transition-opacity text-xs"
+                    style={{ color: 'var(--ink-4)' }}
+                    onMouseDown={(e) => { e.preventDefault(); removeHistoryEntry(entry.query) }}
+                    title="Remove from history"
+                  >×</button>
+                </div>
+              ))}
+            </div>
+          )}
+
           <div
             className="rounded-2xl border border-[var(--line-2)] overflow-hidden transition-shadow focus-within:shadow-[0_0_0_2px_var(--accent-line)]"
             style={{ background: 'var(--bg-1)', boxShadow: 'var(--shadow-md)' }}
@@ -120,13 +165,16 @@ export function Hero() {
               value={query}
               onChange={(e) => dispatch({ type: 'SET_QUERY', payload: e.target.value })}
               onKeyDown={handleKeyDown}
+              onFocus={() => !hasResults && recentHistory.length > 0 && setShowHistory(true)}
+              onBlur={() => setTimeout(() => setShowHistory(false), 150)}
               placeholder="Paste arXiv ID (e.g. 1706.03762), DOI, paper title, or Semantic Scholar URL…"
               rows={hasResults ? 2 : 3}
-              maxLength={600}
+              maxLength={500}
               className="w-full resize-none p-4 text-sm bg-transparent outline-none"
               style={{ color: 'var(--ink)', caretColor: 'var(--accent)' }}
               disabled={isLoading}
             />
+
             {queryTooLong && (
               <p className="px-4 pb-2 text-xs" style={{ color: 'var(--error, #dc2626)' }}>
                 Input is too long — maximum 500 characters ({query.length}/500).

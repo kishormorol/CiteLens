@@ -193,10 +193,10 @@ export function toBibtex(results: Paper[]): string {
   return results
     .map((paper) => {
       const baseKey = buildBibtexKey(paper, 0)
-      const collisionCount = keyCounts.get(baseKey) ?? 0
-      keyCounts.set(baseKey, collisionCount + 1)
-
-      const entryKey = buildBibtexKey(paper, collisionCount)
+      const currentCount = keyCounts.get(baseKey) ?? 0
+      keyCounts.set(baseKey, currentCount + 1)
+      // First occurrence gets no suffix (collisionCount=0), subsequent get a/b/c...
+      const entryKey = buildBibtexKey(paper, currentCount)
       const entryType = inferBibtexEntryType(paper.venue ?? '')
       const authors = joinValues(splitAuthors(paper.authors)).replace(/; /g, ' and ')
       const lines = [
@@ -239,4 +239,56 @@ export function downloadTextFile(filename: string, mimeType: string, content: st
   link.click()
   document.body.removeChild(link)
   URL.revokeObjectURL(url)
+}
+
+/**
+ * Export results as structured JSON.
+ * Includes seed paper metadata, export timestamp, and all ranked papers
+ * with full score breakdowns.
+ */
+export function toJson(
+  results: Paper[],
+  seedPaper: import('../types').SeedPaper | null,
+): string {
+  const payload = {
+    exportedAt: new Date().toISOString(),
+    exportVersion: '1',
+    seedPaper: seedPaper ? {
+      title: seedPaper.title,
+      authors: seedPaper.authors,
+      year: seedPaper.year,
+      venue: seedPaper.venue,
+      citations: seedPaper.citations,
+      totalCiting: seedPaper.citingCount,
+      sources: seedPaper.sources,
+      abstract: seedPaper.abstract,
+      url: seedPaper.url,
+      doi: seedPaper.doi,
+    } : null,
+    totalResults: results.length,
+    results: results.map((paper, index) => ({
+      rank: index + 1,
+      title: paper.title,
+      authors: paper.authors,
+      year: paper.year || null,
+      venue: paper.venue || null,
+      doi: paper.doi || null,
+      url: paper.url || null,
+      citations: paper.citations,
+      scores: {
+        final: paper.final,
+        impact: paper.impact,
+        network: paper.network,
+        relevance: paper.relevance,
+        citationIntent: paper.context,
+      },
+      badges: paper.badges,
+      highlyInfluential: paper.highlyInfluential,
+      review: paper.review,
+      abstract: paper.abstract || null,
+      whyRanked: paper.why,
+      scoreBreakdown: paper.breakdown,
+    })),
+  }
+  return JSON.stringify(payload, null, 2)
 }

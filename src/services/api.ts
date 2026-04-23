@@ -99,8 +99,17 @@ function mapAuthors(authors: ApiAuthor[]): { names: string[]; ids: string[] } {
 
 function mapPaper(result: ApiRankedPaper, index: number): Paper {
   const authorMeta = mapAuthors(result.authors)
+
+  // Use a stable numeric ID derived from the API paper's string ID (via hash)
+  // so that IDs remain stable across filter operations and don't collide.
+  const stableId = result.id
+    ? result.id.split('').reduce((acc, ch) => (acc * 31 + ch.charCodeAt(0)) | 0, index + 1)
+    : index + 1
+  // Ensure positive and unique by using index as tiebreaker salt
+  const id = Math.abs(stableId) || index + 1
+
   return {
-    id: index + 1,
+    id,
     sourceId: result.id,
     title: result.title,
     authors: authorMeta.names.join(', '),
@@ -121,6 +130,7 @@ function mapPaper(result: ApiRankedPaper, index: number): Paper {
     abstract: result.abstract,
     doi: result.doi,
     url: result.url,
+    highlyInfluential: result.highlyInfluential,
   }
 }
 
@@ -143,6 +153,7 @@ function mapSeedPaper(
     sources: sourcesUsed,
     abstract: seed.abstract ?? '',
     url: seed.url,
+    doi: seed.doi,
   }
 }
 

@@ -43,6 +43,7 @@ export interface Paper {
   final: number
   badges: string[]
   review: boolean
+  highlyInfluential: boolean
   why: string
   breakdown: PaperBreakdown
   abstract?: string
@@ -63,6 +64,7 @@ export interface SeedPaper {
   sources: string[]
   abstract: string
   url?: string
+  doi?: string
 }
 
 export interface FiltersState {

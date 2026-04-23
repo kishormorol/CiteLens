@@ -160,7 +160,7 @@ async def get_citing_papers(paper_id: str, limit: int = 200) -> list[RawPaper]:
                 "limit": page_size,
                 "offset": offset,
             }
-            response = await client.get(url, headers=_headers(), params=params)
+            response = await _get_with_retry(client, url, params)
             _raise_for_status(response, "Semantic Scholar")
 
             data = response.json()

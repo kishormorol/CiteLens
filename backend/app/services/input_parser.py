@@ -73,9 +73,13 @@ def parse_input(raw: str) -> ParsedInput:
         return ParsedInput(raw=raw, input_type="semantic_scholar_url", value=m.group(1))
 
     # --- Bare arXiv ID ------------------------------------------------------
-    clean = query.strip("/").split("/")[-1]  # handle trailing slash or full path
+    # Handle paths like "cs.LG/9912.01234" or trailing slashes
+    clean = query.strip("/").split("/")[-1]
     if _ARXIV_ID_RE.match(query) or _ARXIV_OLD_RE.match(query):
         return ParsedInput(raw=raw, input_type="arxiv_id", value=_clean_arxiv_id(query))
+    # Also try matching the clean (path-tail) version for inputs like "/abs/1706.03762"
+    if _ARXIV_ID_RE.match(clean) or _ARXIV_OLD_RE.match(clean):
+        return ParsedInput(raw=raw, input_type="arxiv_id", value=_clean_arxiv_id(clean))
 
     # --- Bare DOI -----------------------------------------------------------
     m = _DOI_BARE_RE.match(query)

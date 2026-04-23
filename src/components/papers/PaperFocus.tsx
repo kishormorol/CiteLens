@@ -4,6 +4,7 @@ import { Badge } from '../ui/Badge'
 import { Metric, RecipeRow } from '../ui/index'
 import { ChevronDownIcon, ChevronUpIcon, ExternalLinkIcon } from '../ui/Icons'
 import { useApp } from '../../context/AppContext'
+import { useClipboard } from '../../hooks/useClipboard'
 
 const REVIEW_BADGE_LABELS = new Set(['Survey', 'Review', 'Comprehensive'])
 
@@ -63,9 +64,29 @@ export function PaperFocus({ paper, rank }: PaperFocusProps) {
   const isExpanded = state.expandedIds.has(paper.id)
   const tone = state.tweaks.reasoningTone
   const breakdownId = useId()
+  const { copied, copy } = useClipboard()
 
   function toggleExpand() {
     dispatch({ type: 'TOGGLE_EXPANDED', payload: paper.id })
+  }
+
+  /** Generate APA-style citation string for this paper */
+  function buildCitation(): string {
+    const authorParts = paper.authors
+      ? paper.authors.split(',').map((a) => a.trim())
+      : []
+    const authorStr =
+      authorParts.length === 0
+        ? 'Unknown Author'
+        : authorParts.length === 1
+        ? authorParts[0]
+        : authorParts.length <= 3
+        ? authorParts.slice(0, -1).join(', ') + ', & ' + authorParts[authorParts.length - 1]
+        : authorParts[0] + ' et al.'
+    const year = paper.year > 0 ? ` (${paper.year}).` : '.'
+    const venue = paper.venue ? ` ${paper.venue}.` : ''
+    const doi = paper.doi ? ` https://doi.org/${paper.doi}` : paper.url ? ` ${paper.url}` : ''
+    return `${authorStr}${year} ${paper.title}.${venue}${doi}`
   }
 
   // Avoid duplicating a "Review" badge if the badges array already contains
@@ -195,16 +216,41 @@ export function PaperFocus({ paper, rank }: PaperFocusProps) {
 
           {/* Footer row */}
           <div className="flex items-center justify-between flex-wrap gap-2 pt-1">
-            <button
-              onClick={toggleExpand}
-              aria-expanded={isExpanded}
-              aria-controls={breakdownId}
-              className="flex items-center gap-1.5 text-xs font-medium transition-colors hover:opacity-80"
-              style={{ color: 'var(--accent-ink)' }}
-            >
-              {isExpanded ? <ChevronUpIcon size={12} /> : <ChevronDownIcon size={12} />}
-              {isExpanded ? 'Hide breakdown' : 'Why ranked here'}
-            </button>
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                onClick={toggleExpand}
+                aria-expanded={isExpanded}
+                aria-controls={breakdownId}
+                className="flex items-center gap-1.5 text-xs font-medium transition-colors hover:opacity-80"
+                style={{ color: 'var(--accent-ink)' }}
+              >
+                {isExpanded ? <ChevronUpIcon size={12} /> : <ChevronDownIcon size={12} />}
+                {isExpanded ? 'Hide breakdown' : 'Why ranked here'}
+              </button>
+
+              {/* Copy Citation button */}
+              <button
+                onClick={() => copy(buildCitation())}
+                className="flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-lg border border-[var(--line)] transition-all hover:bg-[var(--bg-2)]"
+                style={{
+                  color: copied ? 'var(--relevance)' : 'var(--ink-3)',
+                  borderColor: copied ? 'var(--relevance)' : 'var(--line)',
+                }}
+                title="Copy APA citation"
+              >
+                {copied ? (
+                  <>
+                    <span style={{ fontSize: 10 }}>✓</span>
+                    <span>Copied!</span>
+                  </>
+                ) : (
+                  <>
+                    <span style={{ fontSize: 10 }}>⊕</span>
+                    <span>Cite</span>
+                  </>
+                )}
+              </button>
+            </div>
 
             <a
               href={paper.url ?? '#'}

@@ -138,12 +138,19 @@ def rank_papers(seed: RawPaper, candidates: list[RawPaper]) -> list[ScoredPaper]
     relevance_vec = minmax(relevance_vec)
     intent_vec = [1.0 if p.is_highly_influential else 0.0 for p in candidates]
 
-    # Determine which signals are actually available
-    available: set[str] = {"network", "relevance", "intent"}
+    # Determine which signals are actually available (have non-zero values)
+    available: set[str] = set()
     if any(i > 0 for i in impact_vec):
         available.add("impact")
-    else:
-        available.discard("impact")
+    if any(n > 0 for n in network_vec):
+        available.add("network")
+    if any(r > 0 for r in relevance_vec):
+        available.add("relevance")
+    if any(iv > 0 for iv in intent_vec):
+        available.add("intent")
+    # Ensure at least one signal is available (fallback to all)
+    if not available:
+        available = {"impact", "network", "relevance", "intent"}
 
     weights = renormalize_weights(_BASE_WEIGHTS, available)
 

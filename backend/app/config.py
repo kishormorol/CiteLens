@@ -25,6 +25,17 @@ class Settings(BaseSettings):
     OPENALEX_EMAIL: Optional[str] = None
     ARXIV_USER_AGENT: str = "CiteLens/1.0"
 
+    # Admin secret for the cache-clear endpoint.
+    # If unset the endpoint is disabled entirely (returns 403).
+    # Set via env: CACHE_CLEAR_SECRET=some-random-string
+    CACHE_CLEAR_SECRET: Optional[str] = None
+
+    # Comma-separated list of trusted reverse-proxy IPs whose
+    # X-Forwarded-For header the rate limiter will honour.
+    # Example: "10.0.0.1,10.0.0.2" (Render/Railway internal IPs)
+    # Leave empty to trust only the direct client socket IP.
+    TRUSTED_PROXY_IPS: str = ""
+
     @property
     def allowed_origins_list(self) -> list[str]:
         return [o.strip() for o in self.ALLOWED_ORIGINS.split(",") if o.strip()]
