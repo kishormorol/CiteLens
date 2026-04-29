@@ -13,6 +13,17 @@ const CHANGELOG: {
   items: string[]
 }[] = [
   {
+    version: '1.5.0',
+    date: 'Apr 2026',
+    tag: 'feature',
+    items: [
+      'ResearchScope integration — every result card now has a "🔭 ResearchScope" button that searches for related papers by title.',
+      'Deep-link support: CiteLens now reads ?q= from the URL and auto-analyzes on load, enabling one-click flow from ResearchScope paper cards.',
+      'Export results as BibTeX or CSV in one click from the results toolbar.',
+      'Copy APA citation button on each paper card.',
+    ],
+  },
+  {
     version: '1.4.0',
     date: 'Apr 2026',
     tag: 'feature',
