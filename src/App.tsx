@@ -184,6 +184,39 @@ export function App() {
                 complete picture of how a paper has been cited and by whom.
               </p>
             </div>
+
+            {/* ResearchScope promo */}
+            <a
+              href="https://kishormorol.github.io/ResearchScope/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-6 flex items-center justify-between gap-4 rounded-2xl border border-[var(--line)] p-5 transition-colors hover:bg-[var(--bg-2)] group"
+              style={{ background: 'var(--bg-1)', textDecoration: 'none' }}
+            >
+              <div className="flex items-center gap-4">
+                <div
+                  className="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
+                  style={{ background: 'var(--accent-weak)' }}
+                >
+                  🔭
+                </div>
+                <div>
+                  <div className="text-sm font-semibold mb-0.5" style={{ color: 'var(--ink)' }}>
+                    Looking for new CS/AI papers to read?
+                  </div>
+                  <div className="text-xs leading-relaxed" style={{ color: 'var(--ink-4)' }}>
+                    <span style={{ color: 'var(--accent-ink)', fontWeight: 600 }}>ResearchScope</span>
+                    {' '}ranks today's arXiv + conference papers by novelty, venue, and author impact — updated every weekday.
+                  </div>
+                </div>
+              </div>
+              <span
+                className="text-xs font-semibold flex-shrink-0 transition-transform group-hover:translate-x-0.5"
+                style={{ color: 'var(--accent-ink)' }}
+              >
+                Explore →
+              </span>
+            </a>
           </section>
         )}
       </main>
@@ -209,6 +242,16 @@ export function App() {
             <span>Methodology</span>
             <span>API</span>
             <span>Privacy</span>
+            <span>·</span>
+            <a
+              href="https://kishormorol.github.io/ResearchScope/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:opacity-80 transition-opacity"
+              style={{ color: 'var(--accent-ink)' }}
+            >
+              🔭 ResearchScope
+            </a>
           </div>
         </div>
       </footer>
