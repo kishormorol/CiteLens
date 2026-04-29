@@ -59,16 +59,42 @@ Weights are renormalized when a signal is missing. Every result shows the full b
 ## Features
 
 - **Any input format** — arXiv ID/URL, DOI, DOI URL, Semantic Scholar URL, or plain title
+- **Deep-link support** — open CiteLens with `?q=<arxiv_id>` to auto-analyze on load (used by ResearchScope integration)
 - **Ranked results** — sorted by weighted multi-signal score, not raw citation count
 - **Per-paper explanations** — plain-English "Why ranked here" for every result
+- **Copy APA citation** — one-click APA citation copy on every result card
+- **Export results** — download the current ranked list as **BibTeX** or **CSV** in one click
 - **Smart filters** — year range, minimum relevance score, influential-only, reviews-only
+- **Search history** — recent queries saved locally for quick re-analysis
 - **Timeline view** — visualize how citation activity has grown year by year
-- **Network graph** — force-directed citation graph; node size = citations, color = score tier, distance from seed ≈ relevance; drag to reposition, hover for metadata, click to pin score breakdown; freeze/unfreeze simulation, reset layout
-- **Export** — download the current filtered and sorted ranked results as **BibTeX** or **CSV** in one click
+- **Network graph** — force-directed citation graph; node size = citations, color = score tier; drag, hover, click for score breakdown; freeze/unfreeze simulation
 - **Four sort modes** — Most Influential, Most Relevant, Recent, Reviews
 - **Dark mode** — full token-driven palette, five accent colors, compact/cozy density
 - **Zero config** — works out of the box in demo mode with no API keys
 - **Open data** — powered by Semantic Scholar, OpenAlex, and arXiv (all free APIs)
+- **🔭 ResearchScope integration** — every result card links to [ResearchScope](https://kishormorol.github.io/ResearchScope/) to discover more papers on the same topic
+
+---
+
+## Works with ResearchScope
+
+CiteLens and [ResearchScope](https://kishormorol.github.io/ResearchScope/) are companion tools:
+
+```
+ResearchScope  ── discovers and ranks new CS/AI papers daily
+                            │
+                  🔍 Analyze citations
+                            ▼
+CiteLens  ──────── ranks every paper that cited it by impact
+                            │
+                  🔭 Browse topic in ResearchScope
+                            ▼
+ResearchScope  ── find more papers on this topic
+```
+
+**From ResearchScope:** click "🔍 Analyze citations" on any arXiv paper card — CiteLens opens with that paper pre-loaded and auto-analyzes immediately.
+
+**From CiteLens:** click "🔭 ResearchScope" on any result card — ResearchScope search opens pre-filled with the paper's title.
 
 ---
 
@@ -195,13 +221,13 @@ curl -X POST https://citelens-api-production.up.railway.app/api/analyze-paper \
     "id": "204e3073870fae3d05bcbc2f6a8e263d9b72e776",
     "title": "Attention Is All You Need",
     "authors": ["Ashish Vaswani", "Noam Shazeer", "..."],
-    "citationCount": 142318,
+    "citationCount": 174282,
     "year": 2017
   },
   "summary": {
     "totalCitingPapers": 1284,
     "rankedCandidates": 20,
-    "sourcesUsed": ["semantic_scholar", "openalex"],
+    "sourcesUsed": ["Semantic Scholar", "OpenAlex"],
     "mockMode": false
   },
   "results": [
@@ -243,6 +269,7 @@ Other endpoints: `POST /api/resolve-paper` · `POST /api/citations` · `GET /hea
 | `SEMANTIC_SCHOLAR_API_KEY` | — | Optional. Raises SS rate limit from 1 to 10 req/s |
 | `OPENALEX_EMAIL` | — | Recommended. Enables OA polite pool (faster + stable) |
 | `ALLOWED_ORIGINS` | `http://localhost:5173,...` | Comma-separated CORS allow-list |
+| `CACHE_CLEAR_SECRET` | — | Optional. Enables `POST /api/cache/clear` admin endpoint |
 
 ### Frontend (`.env`)
 
@@ -259,7 +286,10 @@ CiteLens/
 ├── src/                        # React + TypeScript frontend
 │   ├── components/             # UI — Hero, Filters, Results, Network, Timeline, Modals
 │   ├── context/AppContext.tsx  # Global state (useReducer + AbortController)
-│   ├── hooks/usePapers.ts      # Memoized filter + sort
+│   ├── hooks/
+│   │   ├── usePapers.ts        # Memoized filter + sort
+│   │   ├── useClipboard.ts     # Copy-to-clipboard with confirmation state
+│   │   └── useSearchHistory.ts # localStorage-backed recent query history
 │   ├── services/api.ts         # Backend client with demo fallback
 │   ├── utils/exportResults.ts  # BibTeX + CSV serialization and download
 │   └── data/mockData.ts        # Bundled demo data
@@ -267,8 +297,9 @@ CiteLens/
 │   └── app/
 │       ├── routes/             # FastAPI endpoints
 │       ├── services/           # Input parsing, paper resolver, ranking, enrichment
+│       ├── middleware/         # Per-IP rate limiting
 │       ├── models/             # Pydantic request/response models
-│       └── utils/              # Text similarity, graph scoring, exceptions
+│       └── utils/              # Cache, text similarity, graph scoring, exceptions
 ├── .github/workflows/          # CI + GitHub Pages deploy
 └── railway.toml                # Railway health check config
 ```
@@ -282,20 +313,22 @@ CiteLens/
 - [x] Timeline view — citation arc over time
 - [x] Network graph — force-directed graph with physics simulation, drag, hover dim, click panel
 - [x] Dark mode, five accent themes, density modes
-- [x] Full frontend ↔ backend integration
+- [x] Full frontend ↔ backend integration (Railway)
 - [x] React error boundary + input validation
 - [x] Export ranked results to BibTeX and CSV
+- [x] Copy APA citation on each result card
+- [x] Search history — recent queries saved locally
+- [x] Per-IP rate limiting on backend
+- [x] Response caching (in-memory, 5-min TTL)
+- [x] ResearchScope integration — deep-link `?q=` + cross-navigation buttons
 - [ ] Self-citation highlighting in network graph
 - [ ] Semantic embeddings (SPECTER2) for higher-quality relevance
 - [ ] Citation context snippets — *how* a paper was cited, not just that it was
 - [ ] Email alerts for new influential citations
-- [ ] Per-IP rate limiting + result caching
 
 ---
 
 ## Alternatives comparison
-
-If you're evaluating CiteLens against other tools:
 
 | Tool | Free | Open source | Ranked scores | Explanations | No sign-up |
 |---|---|---|---|---|---|
@@ -312,7 +345,7 @@ CiteLens is the only tool that gives every citing paper a **multi-signal score w
 
 ## Star history
 
-If CiteLens saves you time, **[give it a star ⭐](https://github.com/kishormorol/CiteLens)** — it helps other researchers find it and costs you one click.
+If CiteLens saves you time, **[give it a star ⭐](https://github.com/kishormorol/CiteLens)** — it helps other researchers find it.
 
 ---
 
@@ -333,6 +366,8 @@ MIT — free to use, fork, and deploy.
 ---
 
 <div align="center">
+
+Also check out **[🔭 ResearchScope](https://kishormorol.github.io/ResearchScope/)** — discover and rank today's CS/AI papers before you dive into their citations.
 
 Inspired by [scite.ai](https://scite.ai) · [Connected Papers](https://www.connectedpapers.com) · [ResearchRabbit](https://www.researchrabbit.ai)
 
