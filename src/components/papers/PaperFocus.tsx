@@ -252,17 +252,30 @@ export function PaperFocus({ paper, rank }: PaperFocusProps) {
               </button>
             </div>
 
-            <a
-              href={paper.url ?? '#'}
-              target={paper.url ? '_blank' : undefined}
-              rel={paper.url ? 'noopener noreferrer' : undefined}
-              aria-label={`Open ${paper.title}${paper.url ? '' : ' (no link available)'}`}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--line)] text-xs font-medium transition-colors hover:bg-[var(--bg-2)]"
-              style={{ color: 'var(--ink-2)', opacity: paper.url ? 1 : 0.5 }}
-            >
-              Open paper
-              <ExternalLinkIcon size={11} />
-            </a>
+            <div className="flex items-center gap-2 flex-wrap">
+              <a
+                href={`https://kishormorol.github.io/ResearchScope/search.html?q=${encodeURIComponent(paper.title)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`Discover more papers like "${paper.title}" on ResearchScope`}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--line)] text-xs font-medium transition-colors hover:bg-[var(--bg-2)]"
+                style={{ color: 'var(--ink-3)' }}
+                title="Discover related papers on ResearchScope"
+              >
+                🔭 ResearchScope
+              </a>
+              <a
+                href={paper.url ?? '#'}
+                target={paper.url ? '_blank' : undefined}
+                rel={paper.url ? 'noopener noreferrer' : undefined}
+                aria-label={`Open ${paper.title}${paper.url ? '' : ' (no link available)'}`}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--line)] text-xs font-medium transition-colors hover:bg-[var(--bg-2)]"
+                style={{ color: 'var(--ink-2)', opacity: paper.url ? 1 : 0.5 }}
+              >
+                Open paper
+                <ExternalLinkIcon size={11} />
+              </a>
+            </div>
           </div>
         </div>
 

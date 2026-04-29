@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { Navbar } from './components/layout/Navbar'
 import { Hero } from './components/hero/Hero'
 import { ResultsShell } from './components/results/ResultsShell'
@@ -7,8 +7,18 @@ import { ErrorBoundary } from './components/ui/ErrorBoundary'
 import { useApp } from './context/AppContext'
 
 export function App() {
-  const { state, dispatch } = useApp()
+  const { state, dispatch, analyze } = useApp()
   const { tweaks, mode } = state
+
+  // Auto-analyze when ?q= is present in the URL (e.g. from ResearchScope links)
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search).get('q')
+    if (q && q.trim()) {
+      dispatch({ type: 'SET_QUERY', payload: q.trim() })
+      analyze(q.trim())
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const accentVars = getAccentVars(tweaks.accent, tweaks.theme)
   const densityClass = tweaks.density === 'compact' ? 'density-compact' : 'density-cozy'

@@ -63,7 +63,8 @@ Weights are renormalized when a signal is missing. Every result shows the full b
 - **Per-paper explanations** — plain-English "Why ranked here" for every result
 - **Smart filters** — year range, minimum relevance score, influential-only, reviews-only
 - **Timeline view** — visualize how citation activity has grown year by year
-- **Network graph** — force-directed citation graph; nodes animate outward from seed on load; node size = citations, color = score tier, distance from seed ≈ relevance; drag to reposition, hover to preview, click to inspect score breakdown
+- **Network graph** — force-directed citation graph; node size = citations, color = score tier, distance from seed ≈ relevance; drag to reposition, hover for metadata, click to pin score breakdown; freeze/unfreeze simulation, reset layout
+- **Export** — download the current filtered and sorted ranked results as **BibTeX** or **CSV** in one click
 - **Four sort modes** — Most Influential, Most Relevant, Recent, Reviews
 - **Dark mode** — full token-driven palette, five accent colors, compact/cozy density
 - **Zero config** — works out of the box in demo mode with no API keys
@@ -127,6 +128,10 @@ Then set `VITE_API_BASE_URL=http://localhost:8000` in a root `.env` and restart 
 
 ### Run tests
 ```bash
+# Frontend
+npm test           # compiles exportResults.ts and runs unit tests
+
+# Backend
 cd backend
 pytest tests/ -v   # 42 tests, no API keys required
 ```
@@ -256,6 +261,7 @@ CiteLens/
 │   ├── context/AppContext.tsx  # Global state (useReducer + AbortController)
 │   ├── hooks/usePapers.ts      # Memoized filter + sort
 │   ├── services/api.ts         # Backend client with demo fallback
+│   ├── utils/exportResults.ts  # BibTeX + CSV serialization and download
 │   └── data/mockData.ts        # Bundled demo data
 ├── backend/
 │   └── app/
@@ -278,9 +284,10 @@ CiteLens/
 - [x] Dark mode, five accent themes, density modes
 - [x] Full frontend ↔ backend integration
 - [x] React error boundary + input validation
+- [x] Export ranked results to BibTeX and CSV
+- [ ] Self-citation highlighting in network graph
 - [ ] Semantic embeddings (SPECTER2) for higher-quality relevance
 - [ ] Citation context snippets — *how* a paper was cited, not just that it was
-- [ ] Export to BibTeX / CSV
 - [ ] Email alerts for new influential citations
 - [ ] Per-IP rate limiting + result caching
 
@@ -314,7 +321,7 @@ If CiteLens saves you time, **[give it a star ⭐](https://github.com/kishormoro
 Issues, ideas, and PRs are welcome.
 
 1. Fork → create a branch → make your change
-2. `pytest tests/ -v` must pass
+2. `npm test` and `pytest tests/ -v` must pass
 3. Open a PR with a clear description
 
 ---
