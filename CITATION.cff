@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+type: software
+title: "CiteLens"
+abstract: "Discover the citing papers that matter most, ranked by impact, relevance, and influence."
+authors:
+  - family-names: Morol
+    given-names: Md Kishor
+repository-code: "https://github.com/kishormorol/CiteLens"
+url: "https://kishormorol.github.io/CiteLens/"
+license: MIT
+keywords:
+  - academic
+  - academic-search
+  - arxiv
+  - bibliometrics
+  - citation-analysis
+  - doi
+  - fastapi
+  - knowledge-graph
+  - literature-review
+  - machine-learning
