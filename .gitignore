@@ -215,3 +215,6 @@ dist/
 # Vite
 .vite/
 .tmp-tests/
+
+# macOS
+.DS_Store
