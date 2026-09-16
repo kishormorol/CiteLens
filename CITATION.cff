@@ -6,6 +6,7 @@ abstract: "Discover the citing papers that matter most, ranked by impact, releva
 authors:
   - family-names: Morol
     given-names: Md Kishor
+    orcid: "https://orcid.org/0000-0002-4468-8260"
 repository-code: "https://github.com/kishormorol/CiteLens"
 url: "https://kishormorol.github.io/CiteLens/"
 license: MIT
