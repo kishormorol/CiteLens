@@ -10,6 +10,7 @@ Paste any paper link. Get a scored, explainable list of the most important paper
 [![License: MIT](https://img.shields.io/badge/License-MIT-22c55e?style=for-the-badge)](LICENSE)
 [![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![React](https://img.shields.io/badge/Frontend-React%2018-61dafb?style=for-the-badge&logo=react&logoColor=black)](https://react.dev)
+[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.22798620-1682D4?style=for-the-badge)](https://doi.org/10.5281/zenodo.22798620)
 
 <br/>
 
