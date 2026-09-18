@@ -1,0 +1,41 @@
+# CiteLens
+
+> CiteLens ranks papers that cite any research paper by a multi-signal score: Impact (45%), Network centrality (25%), Semantic relevance (20%), and Citation context (10%). Every result includes a plain-English explanation.
+
+## What it does
+
+- Input: any arXiv ID, DOI, Semantic Scholar URL, or paper title
+- Output: ranked list of citing papers with scores and explanations
+- Features: force-directed citation network graph, timeline view, smart filters, dark mode
+- No sign-up, no API key required
+
+## Live site
+
+https://kishormorol.github.io/CiteLens/
+
+## Source code
+
+https://github.com/kishormorol/CiteLens
+
+## API
+
+POST https://citelens-api-production.up.railway.app/api/analyze-paper
+Body: { "query": "1706.03762", "limit": 20 }
+
+## Stack
+
+- Frontend: React 18 + TypeScript + Vite + Tailwind CSS
+- Backend: FastAPI + Python 3.11
+- Data: Semantic Scholar, OpenAlex, arXiv (all free APIs)
+
+## Compared to alternatives
+
+- Connected Papers: CiteLens focuses on *citing* papers (forward lookup), not a visual graph of related work
+- scite.ai: CiteLens is fully free and open-source; scite.ai requires a paid subscription
+- ResearchRabbit: CiteLens gives explicit ranked scores with explanations; ResearchRabbit is recommendation-first
+- Litmaps: CiteLens is free and requires no account
+- Inciteful: CiteLens adds semantic relevance scoring and plain-English breakdowns
+
+## Author
+
+Md Kishor Morol — https://github.com/kishormorol
