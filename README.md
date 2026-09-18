@@ -7,6 +7,7 @@
 Paste any paper link. Get a scored, explainable list of the most important papers citing it.
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-kishormorol.github.io%2FCiteLens-4f46e5?style=for-the-badge&logo=github)](https://kishormorol.github.io/CiteLens/)
+[![HF Space](https://img.shields.io/badge/%F0%9F%A4%97%20Space-live%20demo-FFD21E?style=for-the-badge)](https://huggingface.co/spaces/kishormorol/CiteLens)
 [![License: MIT](https://img.shields.io/badge/License-MIT-22c55e?style=for-the-badge)](LICENSE)
 [![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![React](https://img.shields.io/badge/Frontend-React%2018-61dafb?style=for-the-badge&logo=react&logoColor=black)](https://react.dev)
